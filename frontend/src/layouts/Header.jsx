@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Menu, Search, ShieldCheck, Sun, Moon } from 'lucide-react';
+import { Menu, Search, ShieldCheck, Sun, Moon, Command, Sparkles } from 'lucide-react';
 
 const PAGE_TITLES = {
-  '/': 'Dashboard',
-  '/verify': 'Verify an Answer',
+  '/': 'Verification Dashboard',
+  '/verify': 'Verify AI Answer & Claim',
+  '/news': 'Live News Fact-Checker',
   '/history': 'Verification History',
-  '/analytics': 'Analytics',
-  '/sources': 'Sources',
-  '/settings': 'Settings',
+  '/analytics': 'Platform Analytics',
+  '/sources': 'Knowledge Sources',
+  '/settings': 'System Settings',
 };
 
 export default function Header({ onMenuToggle }) {
@@ -16,23 +17,42 @@ export default function Header({ onMenuToggle }) {
   const navigate = useNavigate();
   const [searchVal, setSearchVal] = useState('');
   const [theme, setTheme] = useState(() => {
-    return localStorage.getItem('verifyai_theme') || 
-      (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    return localStorage.getItem('verifyai_theme') || 'light';
   });
 
-  useEffect(() => {
-    if (theme === 'dark') {
+  const applyTheme = (newTheme) => {
+    setTheme(newTheme);
+    localStorage.setItem('verifyai_theme', newTheme);
+    if (newTheme === 'dark') {
       document.documentElement.setAttribute('data-theme', 'dark');
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.removeAttribute('data-theme');
       document.documentElement.classList.remove('dark');
     }
-    localStorage.setItem('verifyai_theme', theme);
+  };
+
+  useEffect(() => {
+    applyTheme(theme);
   }, [theme]);
 
+  useEffect(() => {
+    function handleStorageChange(e) {
+      const incomingTheme = e?.detail?.theme || localStorage.getItem('verifyai_theme') || 'light';
+      setTheme(incomingTheme);
+    }
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('verifyai_theme_change', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('verifyai_theme_change', handleStorageChange);
+    };
+  }, []);
+
   const toggleTheme = () => {
-    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+    const next = theme === 'dark' ? 'light' : 'dark';
+    applyTheme(next);
+    window.dispatchEvent(new CustomEvent('verifyai_theme_change', { detail: { theme: next } }));
   };
 
   const title = PAGE_TITLES[location.pathname] || 'VerifyAI';
@@ -52,23 +72,28 @@ export default function Header({ onMenuToggle }) {
         <Menu size={20} />
       </button>
 
-      {/* Page title */}
-      <div className="header-title">{title}</div>
+      {/* Page title with subtle badge */}
+      <div className="header-title-container">
+        <h2 className="header-title">{title}</h2>
+      </div>
 
       {/* Right actions */}
       <div className="header-actions">
         <form className="header-search" onSubmit={handleSearch}>
-          <Search size={14} className="header-search-icon" />
+          <Search size={15} className="header-search-icon" />
           <input
             type="text"
-            placeholder="Search verifications..."
+            placeholder="Search claims or topics..."
             value={searchVal}
             onChange={(e) => setSearchVal(e.target.value)}
             className="header-search-input"
           />
+          <kbd className="header-search-kbd">
+            <Command size={10} style={{ marginRight: 2 }} />K
+          </kbd>
         </form>
 
-        {/* Dark/Light Mode toggle */}
+        {/* Theme toggle */}
         <button
           className="header-icon-btn"
           onClick={toggleTheme}
@@ -78,24 +103,27 @@ export default function Header({ onMenuToggle }) {
           {theme === 'dark' ? <Sun size={17} color="#F59E0B" /> : <Moon size={17} />}
         </button>
 
-        <div className="header-avatar" title="VerifyAI Active">
-          <ShieldCheck size={16} color="#19C463" />
+        {/* Verified Shield Badge Avatar */}
+        <div className="header-avatar" title="VerifyAI Multi-Agent Consensus Online">
+          <ShieldCheck size={17} color="#FFFFFF" strokeWidth={2.4} />
         </div>
       </div>
 
       <style>{`
         .app-header {
           height: var(--header-height);
-          background: var(--bg-card);
+          background: var(--bg-glass);
+          backdrop-filter: blur(16px);
+          -webkit-backdrop-filter: blur(16px);
           border-bottom: 1px solid var(--border);
           display: flex;
           align-items: center;
-          padding: 0 24px;
+          padding: 0 32px;
           gap: 16px;
           position: sticky;
           top: 0;
           z-index: 40;
-          transition: background-color 0.2s ease, border-color 0.2s ease;
+          transition: background-color 0.25s ease, border-color 0.25s ease;
         }
 
         .header-menu-btn {
@@ -108,17 +136,26 @@ export default function Header({ onMenuToggle }) {
         }
         .header-menu-btn:hover { background: var(--bg-gray); }
 
-        .header-title {
-          font-weight: 600;
-          font-size: 0.9375rem;
-          color: var(--text-primary);
+        .header-title-container {
           flex: 1;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+
+        .header-title {
+          font-family: var(--font-display);
+          font-weight: 750;
+          font-size: 1.0625rem;
+          color: var(--text-primary);
+          letter-spacing: -0.015em;
+          margin: 0;
         }
 
         .header-actions {
           display: flex;
           align-items: center;
-          gap: 10px;
+          gap: 12px;
         }
 
         .header-search {
@@ -129,54 +166,86 @@ export default function Header({ onMenuToggle }) {
 
         .header-search-icon {
           position: absolute;
-          left: 10px;
+          left: 12px;
           color: var(--text-muted);
           pointer-events: none;
         }
 
         .header-search-input {
-          padding: 7px 12px 7px 32px;
+          padding: 8px 36px 8px 36px;
           border: 1px solid var(--border);
-          border-radius: var(--radius-sm);
+          border-radius: 999px;
           font-size: 0.8125rem;
           color: var(--text-primary);
-          background: var(--bg-gray);
-          outline: none;
-          width: 220px;
-          transition: all 0.15s ease;
-        }
-        .header-search-input:focus {
-          border-color: var(--green-primary);
           background: var(--bg-card);
-          box-shadow: 0 0 0 3px rgba(25,196,99,0.15);
-          width: 260px;
+          box-shadow: var(--shadow-xs);
+          outline: none;
+          width: 240px;
+          transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
         }
+
+        .header-search-input:focus {
+          border-color: var(--brand-secondary);
+          background: var(--bg-card);
+          box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15), var(--shadow-sm);
+          width: 290px;
+        }
+
         .header-search-input::placeholder { color: var(--text-muted); }
+
+        .header-search-kbd {
+          position: absolute;
+          right: 12px;
+          display: flex;
+          align-items: center;
+          background: var(--bg-gray);
+          border: 1px solid var(--border);
+          border-radius: 4px;
+          padding: 2px 5px;
+          font-size: 0.65rem;
+          font-weight: 600;
+          color: var(--text-muted);
+          pointer-events: none;
+        }
 
         .header-icon-btn {
           position: relative;
           background: var(--bg-card);
           border: 1px solid var(--border);
-          border-radius: 8px;
-          padding: 7px;
+          border-radius: 10px;
+          width: 36px;
+          height: 36px;
           color: var(--text-secondary);
           display: flex;
           align-items: center;
           justify-content: center;
-          transition: all 0.15s ease;
+          box-shadow: var(--shadow-xs);
+          transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
         }
-        .header-icon-btn:hover { background: var(--bg-gray); border-color: var(--text-muted); }
+
+        .header-icon-btn:hover {
+          background: var(--bg-gray);
+          border-color: var(--border-hover);
+          color: var(--text-primary);
+          transform: translateY(-1px);
+        }
 
         .header-avatar {
-          width: 34px;
-          height: 34px;
-          border-radius: 50%;
-          background: var(--green-light);
-          border: 2px solid var(--green-primary);
+          width: 36px;
+          height: 36px;
+          border-radius: 10px;
+          background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-secondary) 100%);
           display: flex;
           align-items: center;
           justify-content: center;
           cursor: pointer;
+          box-shadow: 0 2px 8px rgba(79, 70, 229, 0.25);
+          transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .header-avatar:hover {
+          box-shadow: 0 4px 14px rgba(79, 70, 229, 0.4);
+          transform: scale(1.05);
         }
 
         @media (max-width: 768px) {

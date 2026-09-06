@@ -8,6 +8,7 @@ export default function AppLayout() {
 
   return (
     <div className="app-layout">
+      <div className="ambient-glow-mesh" aria-hidden="true" />
       <Sidebar
         mobileOpen={mobileOpen}
         onClose={() => setMobileOpen(false)}

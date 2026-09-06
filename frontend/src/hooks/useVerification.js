@@ -2,13 +2,13 @@ import { useState, useCallback } from 'react';
 import { verifyQuestion } from '../services/api';
 
 const STEPS = [
-  { id: 'understanding', label: 'Understanding question' },
-  { id: 'generating', label: 'Generating initial answer' },
-  { id: 'checking_agents', label: 'Checking with verification agents' },
-  { id: 'external_sources', label: 'Checking external sources' },
-  { id: 'detecting_conflicts', label: 'Detecting conflicts' },
-  { id: 'calculating', label: 'Calculating confidence' },
-  { id: 'generating_final', label: 'Generating final answer' },
+  { id: 'understanding', label: 'Semantic Claim Parsing', detail: 'Deconstructing core entities, temporal anchors, and factual claims' },
+  { id: 'generating', label: 'Initial Answer Synthesis', detail: 'Querying high-confidence factual baselines across models' },
+  { id: 'checking_agents', label: 'Multi-Agent Consensus Evaluation', detail: 'Parallel verification by independent verifier agents' },
+  { id: 'external_sources', label: 'Live Grounding & Reference Retrieval', detail: 'Fetching Google News Live Wire and Wikipedia Open REST API' },
+  { id: 'detecting_conflicts', label: 'Conflict & Anomaly Detection', detail: 'Cross-correlating evidence to flag discrepancies' },
+  { id: 'calculating', label: 'Consensus Confidence Scoring', detail: 'Weighting source authority and agreement indices' },
+  { id: 'generating_final', label: 'Single Verified Consensus Delivery', detail: 'Formulating final truth-grounded synthesis' },
 ];
 
 export function useVerification() {

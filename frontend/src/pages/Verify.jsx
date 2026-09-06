@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
-  ShieldCheck, CheckCircle, Circle, Loader,
+  ShieldCheck, CheckCircle2, Circle, Loader,
   AlertTriangle, ChevronDown, ChevronUp,
   RefreshCw, Sparkles, Globe, AlertCircle,
   Copy, Check, ExternalLink, ArrowRight, Zap, HelpCircle,
-  Newspaper, BookOpen, Quote, Radio
+  Newspaper, BookOpen, Quote, Radio, CheckCircle
 } from 'lucide-react';
 import { useVerification } from '../hooks/useVerification';
 import ConfidenceScore from '../components/ui/ConfidenceScore';
@@ -77,7 +77,6 @@ export default function Verify() {
       if (location.state.autoSubmit) {
         verify(initQ);
       }
-      // Clear state so back navigation doesn't re-trigger
       window.history.replaceState({}, document.title);
     }
   }, [location.state]);
@@ -103,46 +102,55 @@ export default function Verify() {
     setTimeout(() => setCopied(false), 2000);
   }
 
-  const stepsDone = loading || result
-    ? (result ? steps.length : activeStepIndex)
-    : -1;
-
   const currentQuestions = QUESTION_CATEGORIES.find(c => c.category === selectedCategory)?.questions || [];
 
   return (
     <div className="page-content fade-in">
-      {/* Page header */}
+      {/* Page Header */}
       <div className="page-header">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
           <div>
+            <div className="verify-badge">
+              <Sparkles size={13} color="var(--brand-secondary)" />
+              <span>Multi-Agent Consensus & Real-Time Grounding</span>
+            </div>
             <h1>Verify an AI Answer & News Claim</h1>
             <p>
-              Submit any question or news claim for multi-agent parallel fact-checking, Google News & Wikipedia grounding, and confidence consensus scoring.
+              Submit any factual question, news claim, or statement for cross-model verification against Google News RSS and Wikipedia Open REST API.
             </p>
           </div>
           <button
-            className="btn btn--secondary"
+            className="btn btn-secondary"
             onClick={() => navigate('/news')}
-            style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+            style={{ display: 'flex', alignItems: 'center', gap: 7 }}
           >
-            <Newspaper size={15} color="var(--green-primary)" />
+            <Newspaper size={15} color="var(--brand-primary)" />
             <span>Browse Live News</span>
           </button>
         </div>
       </div>
 
-      {/* Input area */}
+      {/* Input Area Card with Futuristic Scanner Effect */}
       {!result && (
-        <div className="verify-input-card card fade-in-up" style={{ padding: 24, marginBottom: 24 }}>
+        <div className={`card verify-input-card scanner-container fade-in-up ${loading ? 'is-scanning' : ''}`}>
+          {/* Laser Scanner Beam (Active during typing or loading) */}
+          {(loading || question.length > 0) && <div className="scanner-beam" />}
+
+          {/* Live Sonar Connection Pill */}
           <div className="grounding-indicator">
-            <div className="grounding-dot" />
-            <span>Connected: <strong>Google News Live RSS + Wikipedia Open REST API + Multi-Model AI</strong></span>
+            <div className="sonar-emitter">
+              <div className="sonar-ping-dot" />
+              <div className="sonar-ping-wave" />
+            </div>
+            <span>
+              Connected: <strong>Google News Live RSS + Wikipedia Open REST API + Multi-Model AI</strong>
+            </span>
           </div>
 
-          <form onSubmit={handleSubmit} style={{ marginTop: 12 }}>
+          <form onSubmit={handleSubmit} style={{ marginTop: 16 }}>
             <textarea
               className="verify-textarea"
-              placeholder="Ask any question, paste a news headline, or test a factual claim (e.g. 'Did NASA discover water on the Moon?' or 'Who invented the telephone?')..."
+              placeholder="Ask any question, paste a news headline, or test a claim (e.g., 'Did NASA confirm water ice on the Moon?' or 'Who invented the telephone?')..."
               value={question}
               onChange={(e) => setQuestion(e.target.value)}
               rows={4}
@@ -151,22 +159,22 @@ export default function Verify() {
 
             <div className="verify-input-footer">
               <span className="verify-char-count">
-                {question.length}/2000 characters
+                {question.length} / 2000 characters
               </span>
               <button
                 type="submit"
-                className="btn btn--primary"
+                className="btn btn-primary"
                 disabled={loading || question.trim().length < 3}
-                style={{ minWidth: 160 }}
+                style={{ minWidth: 175, height: 42 }}
               >
                 {loading ? (
                   <>
                     <Loader size={16} className="animate-spin" />
-                    <span>Verifying...</span>
+                    <span>Fact-Checking...</span>
                   </>
                 ) : (
                   <>
-                    <ShieldCheck size={16} />
+                    <ShieldCheck size={17} />
                     <span>Fact-Check Claim</span>
                   </>
                 )}
@@ -176,7 +184,7 @@ export default function Verify() {
 
           {/* Quick-Pick Questions */}
           {!loading && (
-            <div className="verify-quick-picks" style={{ marginTop: 24 }}>
+            <div className="verify-quick-picks">
               <div className="quick-picks-header">
                 <span className="quick-picks-label">Explore Suggested Claims & News</span>
                 <div className="quick-picks-tabs">
@@ -203,7 +211,7 @@ export default function Verify() {
                     }}
                   >
                     <span>{q}</span>
-                    <ArrowRight size={13} className="quick-pick-arrow" />
+                    <ArrowRight size={14} className="quick-pick-arrow" />
                   </button>
                 ))}
               </div>
@@ -214,22 +222,28 @@ export default function Verify() {
 
       {/* Progress Steps (during loading) */}
       {loading && (
-        <div className="card verify-progress-card fade-in-up" style={{ padding: 24, marginBottom: 24 }}>
+        <div className="card verify-progress-card fade-in-up">
           <div className="progress-header">
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <Loader size={18} className="animate-spin" color="var(--green-primary)" />
-              <span style={{ fontWeight: 650, fontSize: '0.9375rem' }}>
-                Executing Multi-Source Verification Pipeline...
-              </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div className="progress-spin-ring">
+                <Loader size={20} className="animate-spin" color="var(--brand-primary)" />
+              </div>
+              <div>
+                <span style={{ fontWeight: 700, fontSize: '0.975rem', color: 'var(--text-primary)' }}>
+                  Executing Multi-Source Verification Pipeline...
+                </span>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 2 }}>
+                  Parallel AI analysis & factual grounding in progress
+                </div>
+              </div>
             </div>
-            <span className="badge badge-green">In Progress</span>
+            <span className="badge badge-indigo">Active Trace</span>
           </div>
 
           <div className="pipeline-steps-list">
             {steps.map((step, index) => {
               const isDone = index < activeStepIndex;
               const isCurrent = index === activeStepIndex;
-              const isPending = index > activeStepIndex;
 
               return (
                 <div
@@ -238,11 +252,13 @@ export default function Verify() {
                 >
                   <div className="step-icon-col">
                     {isDone ? (
-                      <CheckCircle size={16} color="var(--green-primary)" />
+                      <CheckCircle2 size={18} color="var(--emerald-primary)" />
                     ) : isCurrent ? (
-                      <Loader size={16} className="animate-spin" color="var(--green-primary)" />
+                      <div className="current-step-pulse">
+                        <Loader size={16} className="animate-spin" color="var(--brand-primary)" />
+                      </div>
                     ) : (
-                      <Circle size={16} color="var(--border-dark)" />
+                      <Circle size={16} color="#CBD5E1" />
                     )}
                   </div>
                   <div className="step-info-col">
@@ -258,17 +274,17 @@ export default function Verify() {
 
       {/* Error State */}
       {error && !loading && (
-        <div className="card" style={{ padding: 24, background: '#FEF2F2', border: '1px solid #FECACA', marginBottom: 24 }}>
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-            <AlertCircle size={20} color="#DC2626" style={{ flexShrink: 0, marginTop: 2 }} />
+        <div className="card" style={{ padding: 24, background: 'var(--error-light)', border: '1px solid var(--error-border)', marginBottom: 24 }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
+            <AlertCircle size={22} color="var(--error)" style={{ flexShrink: 0, marginTop: 2 }} />
             <div style={{ flex: 1 }}>
-              <p style={{ color: '#991B1B', fontWeight: 600, marginBottom: 4 }}>
-                Verification Error
+              <p style={{ color: 'var(--error)', fontWeight: 700, marginBottom: 4 }}>
+                Verification Pipeline Error
               </p>
-              <p style={{ color: '#DC2626', fontSize: '0.875rem', marginBottom: 14 }}>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: 14 }}>
                 {error}
               </p>
-              <button className="btn btn--secondary btn--sm" onClick={handleNewQuestion}>
+              <button className="btn btn-secondary btn-sm" onClick={handleNewQuestion}>
                 <RefreshCw size={13} /> Try Another Question
               </button>
             </div>
@@ -278,74 +294,75 @@ export default function Verify() {
 
       {/* Verified Result View */}
       {result && !loading && (
-        <div className="fade-in-up" style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+        <div className="fade-in-up" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           
           {/* Demo simulation badge */}
           {result.demoMode && (
             <div className="demo-banner">
-              <Sparkles size={14} color="#3B82F6" />
+              <Sparkles size={16} color="var(--brand-primary)" />
               <span>
-                <strong>Grounding Active:</strong> Live Wikipedia & Google News sources retrieved. AI multi-model consensus evaluated.
+                <strong>Grounding Active:</strong> Live Wikipedia & Google News verified. AI multi-agent consensus evaluated.
               </span>
             </div>
           )}
 
           {/* Answer Card */}
-          <div className="answer-card card" style={{ padding: 28 }}>
+          <div className="answer-card card">
             <div className="answer-card-header">
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <StatusBadge status={result.status} size="md" />
                 <span className="badge badge-gray" style={{ textTransform: 'capitalize' }}>
-                  {result.classification || 'General'}
+                  {result.classification || 'General Fact'}
                 </span>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <button
-                  className="btn btn--secondary btn--sm"
+                  className="btn btn-secondary btn-sm"
                   onClick={handleCopy}
                   style={{ gap: 6 }}
                 >
-                  {copied ? <Check size={13} color="var(--green-dark)" /> : <Copy size={13} />}
-                  {copied ? 'Copied' : 'Copy'}
+                  {copied ? <Check size={14} color="var(--emerald-primary)" /> : <Copy size={14} />}
+                  <span>{copied ? 'Copied' : 'Copy Answer'}</span>
                 </button>
-                <button className="btn btn--primary btn--sm" onClick={handleNewQuestion} style={{ gap: 6 }}>
-                  <RefreshCw size={13} /> Verify Another
+                <button className="btn btn-primary btn-sm" onClick={handleNewQuestion} style={{ gap: 6 }}>
+                  <RefreshCw size={14} />
+                  <span>Verify Another</span>
                 </button>
               </div>
             </div>
 
             {/* Question */}
-            <div className="answer-question" style={{ margin: '18px 0 12px' }}>
+            <div className="answer-question">
               <span className="answer-question-label">Fact-Checked Claim</span>
-              <h2 style={{ fontSize: '1.25rem', fontWeight: 650, color: 'var(--text-primary)', marginTop: 4 }}>
+              <h2 className="answer-question-title">
                 {result.question}
               </h2>
             </div>
 
-            <div className="divider" style={{ margin: '16px 0 20px' }} />
+            <div className="divider" />
 
             {/* Verified Answer Body */}
             <div className="answer-body">
-              <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--green-dark)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
-                Single Verified Answer
+              <div className="answer-body-label">
+                <CheckCircle2 size={14} color="var(--emerald-primary)" />
+                <span>Single Verified Consensus</span>
               </div>
-              <p style={{ color: 'var(--text-primary)', lineHeight: 1.75, fontSize: '1rem', whiteSpace: 'pre-line' }}>
+              <p className="answer-body-text">
                 {result.answer || result.finalAnswer}
               </p>
             </div>
 
-            <div className="divider" style={{ margin: '22px 0' }} />
+            <div className="divider" />
 
             {/* Confidence & Evidence Checklist */}
             <div className="answer-meta-row">
               <div className="answer-confidence-block">
-                <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                  Confidence Assessment
-                </div>
+                <div className="meta-section-label">Consensus Score</div>
                 <ConfidenceScore
                   score={result.confidence ?? result.confidenceScore}
                   level={result.confidenceLevel}
-                  size="lg"
+                  size="md"
+                  variant="radial"
                   showBar
                 />
               </div>
@@ -370,9 +387,7 @@ export default function Verify() {
             {/* Sources list */}
             {result.sources?.length > 0 && (
               <div style={{ marginTop: 24 }}>
-                <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                  Verified Reference Sources
-                </div>
+                <div className="meta-section-label">Verified Reference Sources</div>
                 <div className="answer-sources">
                   {result.sources.map((src, i) => {
                     const srcName = typeof src === 'string' ? src : (src.name || src.title);
@@ -382,11 +397,11 @@ export default function Verify() {
                     return (
                       <div key={i} className={`answer-source-chip ${isWiki ? 'chip--wiki' : isGoogle ? 'chip--google' : ''}`}>
                         {isWiki ? (
-                          <BookOpen size={12} color="#10B981" />
+                          <BookOpen size={13} color="#059669" />
                         ) : isGoogle ? (
-                          <Newspaper size={12} color="#3B82F6" />
+                          <Newspaper size={13} color="#4F46E5" />
                         ) : (
-                          <Globe size={12} color="var(--green-primary)" />
+                          <Globe size={13} color="var(--brand-primary)" />
                         )}
                         <span>{srcName}</span>
                       </div>
@@ -404,13 +419,15 @@ export default function Verify() {
                 className="evidence-card-header"
                 onClick={() => setEvidenceOpen(!evidenceOpen)}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <Quote size={16} color="var(--green-primary)" />
-                  <span style={{ fontWeight: 650, fontSize: '0.9375rem', color: 'var(--text-primary)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div className="evidence-icon-badge">
+                    <Quote size={16} color="var(--brand-primary)" />
+                  </div>
+                  <span style={{ fontWeight: 700, fontSize: '0.9375rem', color: 'var(--text-primary)' }}>
                     Verified Evidence Quotes & Live Reference Extracts ({result.evidenceSnippets.length})
                   </span>
                 </div>
-                {evidenceOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                {evidenceOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
               </div>
 
               {evidenceOpen && (
@@ -453,14 +470,14 @@ export default function Verify() {
           )}
 
           {/* Multi-Agent Trace Details Toggle */}
-          <div className="card">
+          <div className="card" style={{ overflow: 'hidden' }}>
             <button
               className="verification-details-toggle"
               onClick={() => setDetailsOpen(!detailsOpen)}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <HelpCircle size={16} color="var(--green-primary)" />
-                <span style={{ fontWeight: 600, fontSize: '0.875rem' }}>View Multi-Agent Verification Trace</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <HelpCircle size={17} color="var(--brand-primary)" />
+                <span style={{ fontWeight: 650, fontSize: '0.875rem' }}>View Multi-Agent Verification Trace</span>
               </div>
               {detailsOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
             </button>
@@ -476,7 +493,7 @@ export default function Verify() {
                         <div key={i} className="details-step">
                           <div className={`details-step-dot ${step.status === 'conflict' ? 'warn' : 'done'}`} />
                           <div>
-                            <div style={{ fontWeight: 600, fontSize: '0.8125rem', color: 'var(--text-primary)' }}>
+                            <div style={{ fontWeight: 650, fontSize: '0.8125rem', color: 'var(--text-primary)' }}>
                               {step.label}
                             </div>
                             <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 2 }}>
@@ -491,14 +508,14 @@ export default function Verify() {
 
                 {/* Verifier Models */}
                 {result.verifierDetails?.length > 0 && (
-                  <div className="details-section" style={{ marginTop: 18 }}>
+                  <div className="details-section" style={{ marginTop: 20 }}>
                     <div className="details-section-title">AI Verifier Agent Outputs</div>
                     <div className="details-agents-grid">
                       {result.verifierDetails.map((v, i) => (
                         <div key={i} className="details-agent-card">
                           <div className="details-agent-header">
                             <span className="details-agent-name">{v.provider}</span>
-                            <span className={`badge ${v.agreement ? 'badge-green' : 'badge-amber'}`}>
+                            <span className={`badge ${v.agreement ? 'badge-green' : 'badge-yellow'}`}>
                               {v.agreement ? 'Agreed' : 'Disputed'}
                             </span>
                           </div>
@@ -518,213 +535,309 @@ export default function Verify() {
       )}
 
       <style>{`
+        .verify-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 4px 10px;
+          background: var(--brand-light);
+          border: 1px solid rgba(99, 102, 241, 0.2);
+          border-radius: 999px;
+          font-size: 0.75rem;
+          font-weight: 600;
+          color: var(--brand-primary);
+          margin-bottom: 10px;
+        }
+
+        .verify-input-card {
+          padding: 28px;
+          margin-bottom: 28px;
+          background: var(--bg-card);
+          border: 1px solid var(--border);
+          border-radius: var(--radius-lg);
+          box-shadow: var(--shadow-sm);
+          position: relative;
+        }
+
+        .verify-input-card.is-scanning {
+          border-color: rgba(99, 102, 241, 0.4);
+          box-shadow: 0 0 20px -4px rgba(99, 102, 241, 0.15);
+        }
+
         .grounding-indicator {
           display: flex;
           align-items: center;
-          gap: 8px;
-          padding: 8px 12px;
-          background: #ECFDF5;
+          gap: 10px;
+          padding: 10px 14px;
+          background: var(--emerald-light);
           border-radius: var(--radius-sm);
           font-size: 0.8125rem;
-          color: #065F46;
-          border: 1px solid #A7F3D0;
-        }
-
-        .grounding-dot {
-          width: 8px;
-          height: 8px;
-          background: #10B981;
-          border-radius: 50%;
-          box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+          color: var(--emerald-dark);
+          border: 1px solid var(--emerald-border);
         }
 
         .verify-textarea {
           width: 100%;
           border: 1px solid var(--border);
           border-radius: var(--radius-md);
-          padding: 14px 16px;
-          font-size: 0.95rem;
+          padding: 16px 18px;
+          font-size: 0.975rem;
           font-family: inherit;
           color: var(--text-primary);
-          background: #fff;
+          background: var(--bg-card);
           resize: vertical;
           outline: none;
-          transition: border-color 0.2s, box-shadow 0.2s;
+          transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
           line-height: 1.6;
         }
 
         .verify-textarea:focus {
-          border-color: var(--green-primary);
-          box-shadow: 0 0 0 3px rgba(25, 196, 99, 0.15);
+          border-color: var(--brand-secondary);
+          box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
         }
 
         .verify-input-footer {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          margin-top: 12px;
+          margin-top: 14px;
         }
 
         .verify-char-count {
           font-size: 0.775rem;
           color: var(--text-muted);
+          font-weight: 500;
+        }
+
+        .verify-quick-picks {
+          margin-top: 28px;
+          padding-top: 22px;
+          border-top: 1px solid var(--border-light);
         }
 
         .quick-picks-header {
-          margin-bottom: 12px;
+          margin-bottom: 16px;
         }
 
         .quick-picks-label {
           font-size: 0.75rem;
-          font-weight: 600;
+          font-weight: 700;
           color: var(--text-muted);
           text-transform: uppercase;
-          letter-spacing: 0.06em;
+          letter-spacing: 0.07em;
           display: block;
-          margin-bottom: 8px;
+          margin-bottom: 10px;
         }
 
         .quick-picks-tabs {
           display: flex;
-          gap: 6px;
+          gap: 8px;
           overflow-x: auto;
           padding-bottom: 6px;
         }
 
         .quick-picks-tab {
-          padding: 5px 12px;
-          background: var(--bg-subtle);
+          padding: 6px 14px;
+          background: var(--bg-card);
           border: 1px solid var(--border);
           border-radius: 999px;
           font-size: 0.775rem;
+          font-weight: 550;
           color: var(--text-secondary);
           cursor: pointer;
           white-space: nowrap;
-          transition: all 0.15s;
+          transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .quick-picks-tab:hover {
-          background: #fff;
+          background: var(--bg-gray);
           color: var(--text-primary);
+          border-color: var(--border-hover);
         }
 
         .quick-picks-tab--active {
-          background: var(--green-primary);
-          color: #fff;
-          border-color: var(--green-primary);
-          font-weight: 550;
+          background: var(--brand-light);
+          color: var(--brand-primary);
+          border-color: rgba(99, 102, 241, 0.35);
+          font-weight: 650;
+          box-shadow: 0 1px 4px rgba(99, 102, 241, 0.12);
         }
 
         .quick-picks-grid {
           display: grid;
           grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-          gap: 8px;
+          gap: 10px;
         }
 
         .quick-pick-btn {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          gap: 10px;
-          padding: 10px 14px;
-          background: var(--bg-subtle);
-          border: 1px solid var(--border-light);
+          gap: 12px;
+          padding: 12px 16px;
+          background: var(--bg-card);
+          border: 1px solid var(--border);
           border-radius: var(--radius-sm);
-          font-size: 0.8125rem;
+          font-size: 0.845rem;
           color: var(--text-secondary);
           text-align: left;
           cursor: pointer;
-          transition: all 0.15s;
+          transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .quick-pick-btn:hover {
-          background: #fff;
-          border-color: var(--green-primary);
-          color: var(--text-primary);
-          transform: translateY(-1px);
-          box-shadow: var(--shadow-sm);
+          background: var(--bg-gray);
+          border-color: rgba(99, 102, 241, 0.35);
+          color: var(--brand-primary);
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
         }
 
         .quick-pick-arrow {
           color: var(--text-muted);
           flex-shrink: 0;
-          transition: transform 0.15s;
+          transition: transform 0.2s;
         }
 
         .quick-pick-btn:hover .quick-pick-arrow {
-          color: var(--green-primary);
-          transform: translateX(2px);
+          color: var(--brand-primary);
+          transform: translateX(4px);
         }
 
         .verify-progress-card {
-          border-left: 4px solid var(--green-primary);
+          padding: 26px;
+          margin-bottom: 28px;
+          background: var(--bg-card);
+          border: 1px solid var(--border);
+          border-left: 4px solid var(--brand-primary);
+          box-shadow: var(--shadow-md);
         }
 
         .progress-header {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          margin-bottom: 18px;
+          margin-bottom: 22px;
+        }
+
+        .progress-spin-ring {
+          width: 36px;
+          height: 36px;
+          background: var(--brand-light);
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
 
         .pipeline-steps-list {
           display: flex;
           flex-direction: column;
-          gap: 12px;
+          gap: 14px;
         }
 
         .pipeline-step-item {
           display: flex;
           align-items: flex-start;
-          gap: 12px;
+          gap: 14px;
           opacity: 0.45;
-          transition: opacity 0.2s;
+          transition: all 0.25s ease;
         }
 
         .pipeline-step-item--done {
-          opacity: 0.9;
+          opacity: 0.95;
         }
 
         .pipeline-step-item--current {
           opacity: 1;
-          font-weight: 600;
+        }
+
+        .pipeline-step-item--current .step-label {
+          color: var(--brand-primary);
+          font-weight: 700;
         }
 
         .step-label {
-          font-size: 0.845rem;
+          font-size: 0.875rem;
           color: var(--text-primary);
+          font-weight: 600;
         }
 
         .step-detail {
           font-size: 0.75rem;
           color: var(--text-muted);
-          margin-top: 1px;
+          margin-top: 2px;
         }
 
         .demo-banner {
           display: flex;
           align-items: center;
-          gap: 8px;
-          background: #EFF6FF;
-          border: 1px solid #BFDBFE;
+          gap: 10px;
+          background: var(--brand-light);
+          border: 1px solid rgba(99, 102, 241, 0.25);
           border-radius: var(--radius-sm);
-          padding: 10px 14px;
-          font-size: 0.8125rem;
-          color: #1E40AF;
+          padding: 12px 16px;
+          font-size: 0.845rem;
+          color: var(--brand-hover);
+        }
+
+        .answer-card {
+          padding: 32px;
+          background: var(--bg-card);
+          border: 1px solid var(--border);
+          border-radius: var(--radius-lg);
+          box-shadow: var(--shadow-sm);
         }
 
         .answer-card-header {
           display: flex;
           justify-content: space-between;
           align-items: center;
+          flex-wrap: wrap;
+          gap: 12px;
+        }
+
+        .answer-question {
+          margin: 22px 0 16px;
         }
 
         .answer-question-label {
           font-size: 0.725rem;
-          font-weight: 600;
+          font-weight: 700;
           color: var(--text-muted);
           text-transform: uppercase;
+          letter-spacing: 0.08em;
+        }
+
+        .answer-question-title {
+          font-size: 1.35rem;
+          font-weight: 750;
+          color: var(--text-primary);
+          margin-top: 6px;
+          line-height: 1.35;
+        }
+
+        .answer-body {
+          margin: 18px 0;
+        }
+
+        .answer-body-label {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          font-size: 0.75rem;
+          font-weight: 700;
+          color: var(--emerald-dark);
+          text-transform: uppercase;
           letter-spacing: 0.06em;
+          margin-bottom: 10px;
+        }
+
+        .answer-body-text {
+          color: var(--text-primary);
+          line-height: 1.8;
+          font-size: 1.025rem;
+          white-space: pre-line;
         }
 
         .answer-meta-row {
@@ -732,13 +845,23 @@ export default function Verify() {
           justify-content: space-between;
           align-items: center;
           flex-wrap: wrap;
-          gap: 20px;
+          gap: 24px;
+          padding: 6px 0;
+        }
+
+        .meta-section-label {
+          font-size: 0.75rem;
+          font-weight: 700;
+          color: var(--text-muted);
+          text-transform: uppercase;
+          letter-spacing: 0.06em;
+          margin-bottom: 10px;
         }
 
         .answer-checks {
           display: flex;
           flex-direction: column;
-          gap: 8px;
+          gap: 10px;
         }
 
         .answer-sources {
@@ -752,30 +875,31 @@ export default function Verify() {
           align-items: center;
           gap: 6px;
           padding: 6px 12px;
-          background: var(--bg-subtle);
+          background: var(--bg-card);
           border: 1px solid var(--border);
           border-radius: 999px;
           font-size: 0.775rem;
+          font-weight: 550;
           color: var(--text-secondary);
         }
 
         .chip--wiki {
-          background: #ECFDF5;
-          border-color: #A7F3D0;
-          color: #065F46;
-          font-weight: 550;
+          background: var(--emerald-light);
+          border-color: var(--emerald-border);
+          color: var(--emerald-dark);
         }
 
         .chip--google {
-          background: #EFF6FF;
-          border-color: #BFDBFE;
-          color: #1E40AF;
-          font-weight: 550;
+          background: var(--brand-light);
+          border-color: rgba(99, 102, 241, 0.35);
+          color: var(--brand-primary);
         }
 
         .evidence-card {
-          padding: 20px 24px;
-          border-left: 4px solid var(--green-primary);
+          padding: 22px 26px;
+          background: var(--bg-card);
+          border: 1px solid var(--border);
+          border-left: 4px solid var(--brand-primary);
         }
 
         .evidence-card-header {
@@ -785,49 +909,59 @@ export default function Verify() {
           cursor: pointer;
         }
 
+        .evidence-icon-badge {
+          width: 32px;
+          height: 32px;
+          border-radius: 8px;
+          background: var(--brand-light);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
         .evidence-list {
           display: flex;
           flex-direction: column;
           gap: 14px;
-          margin-top: 18px;
+          margin-top: 20px;
         }
 
         .evidence-item {
-          padding: 14px 16px;
-          background: var(--bg-subtle);
-          border: 1px solid var(--border-light);
+          padding: 16px 18px;
+          background: var(--bg-gray);
+          border: 1px solid var(--border);
           border-radius: var(--radius-md);
         }
 
         .evidence-meta {
           display: flex;
           align-items: center;
-          gap: 8px;
+          gap: 10px;
           flex-wrap: wrap;
-          margin-bottom: 6px;
+          margin-bottom: 8px;
         }
 
         .evidence-badge {
           font-size: 0.6875rem;
           font-weight: 700;
-          padding: 2px 7px;
-          border-radius: 4px;
+          padding: 3px 8px;
+          border-radius: 5px;
           text-transform: uppercase;
         }
 
         .badge--wiki {
-          background: #D1FAE5;
-          color: #065F46;
+          background: var(--emerald-light);
+          color: var(--emerald-dark);
         }
 
         .badge--news {
-          background: #DBEAFE;
-          color: #1E40AF;
+          background: var(--brand-light);
+          color: var(--brand-primary);
         }
 
         .evidence-source {
           font-size: 0.75rem;
-          font-weight: 600;
+          font-weight: 650;
           color: var(--text-secondary);
         }
 
@@ -840,34 +974,32 @@ export default function Verify() {
           margin-left: auto;
           display: flex;
           align-items: center;
-          gap: 3px;
+          gap: 4px;
           font-size: 0.75rem;
-          color: var(--green-dark);
+          color: var(--brand-primary);
           text-decoration: none;
-          font-weight: 550;
+          font-weight: 600;
         }
 
-        .evidence-url-link:hover {
-          text-decoration: underline;
-        }
+        .evidence-url-link:hover { text-decoration: underline; }
 
         .evidence-title {
           font-size: 0.875rem;
-          font-weight: 600;
+          font-weight: 650;
           color: var(--text-primary);
-          margin-bottom: 4px;
+          margin-bottom: 6px;
         }
 
         .evidence-quote {
-          font-size: 0.835rem;
+          font-size: 0.85rem;
           color: var(--text-secondary);
-          line-height: 1.55;
+          line-height: 1.6;
           font-style: italic;
         }
 
         .verification-details-toggle {
           width: 100%;
-          padding: 16px 20px;
+          padding: 18px 24px;
           display: flex;
           justify-content: space-between;
           align-items: center;
@@ -877,28 +1009,28 @@ export default function Verify() {
         }
 
         .verification-details {
-          padding: 0 20px 20px;
+          padding: 0 24px 24px;
         }
 
         .details-section-title {
           font-size: 0.75rem;
-          font-weight: 650;
+          font-weight: 700;
           color: var(--text-muted);
           text-transform: uppercase;
-          letter-spacing: 0.06em;
-          margin-bottom: 12px;
+          letter-spacing: 0.07em;
+          margin-bottom: 14px;
         }
 
         .details-steps {
           display: flex;
           flex-direction: column;
-          gap: 10px;
+          gap: 12px;
         }
 
         .details-step {
           display: flex;
           align-items: flex-start;
-          gap: 10px;
+          gap: 12px;
         }
 
         .details-step-dot {
@@ -910,7 +1042,7 @@ export default function Verify() {
         }
 
         .details-step-dot.done {
-          background: var(--green-primary);
+          background: var(--emerald-primary);
         }
 
         .details-step-dot.warn {
@@ -919,13 +1051,13 @@ export default function Verify() {
 
         .details-agents-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-          gap: 12px;
+          grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+          gap: 14px;
         }
 
         .details-agent-card {
-          padding: 14px;
-          background: var(--bg-subtle);
+          padding: 16px;
+          background: #F8FAFC;
           border: 1px solid var(--border-light);
           border-radius: var(--radius-sm);
         }
@@ -938,7 +1070,7 @@ export default function Verify() {
         }
 
         .details-agent-name {
-          font-weight: 650;
+          font-weight: 700;
           font-size: 0.8125rem;
           color: var(--text-primary);
         }
@@ -946,16 +1078,25 @@ export default function Verify() {
         .details-agent-reason {
           font-size: 0.775rem;
           color: var(--text-secondary);
-          line-height: 1.45;
-          margin-bottom: 8px;
+          line-height: 1.5;
+          margin-bottom: 10px;
         }
 
         .details-agent-meta {
           font-size: 0.725rem;
           color: var(--text-muted);
+          font-weight: 550;
+        }
+
+        .divider {
+          height: 1px;
+          background: var(--border-light);
+          margin: 20px 0;
         }
 
         @media (max-width: 768px) {
+          .verify-input-card { padding: 20px; }
+          .answer-card { padding: 20px; }
           .answer-meta-row {
             flex-direction: column;
             align-items: flex-start;
@@ -968,15 +1109,15 @@ export default function Verify() {
 
 function CheckItem({ ok, label, warn }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.845rem' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: '0.845rem' }}>
       {ok ? (
-        <CheckCircle size={15} color="var(--green-primary)" style={{ flexShrink: 0 }} />
+        <CheckCircle2 size={16} color="var(--emerald-primary)" style={{ flexShrink: 0 }} />
       ) : warn ? (
-        <AlertTriangle size={15} color="#F59E0B" style={{ flexShrink: 0 }} />
+        <AlertTriangle size={16} color="#F59E0B" style={{ flexShrink: 0 }} />
       ) : (
-        <Circle size={15} color="var(--border-dark)" style={{ flexShrink: 0 }} />
+        <Circle size={16} color="#CBD5E1" style={{ flexShrink: 0 }} />
       )}
-      <span style={{ color: ok ? 'var(--text-primary)' : 'var(--text-secondary)', fontWeight: ok ? 500 : 400 }}>
+      <span style={{ color: ok ? 'var(--text-primary)' : 'var(--text-secondary)', fontWeight: ok ? 550 : 450 }}>
         {label}
       </span>
     </div>

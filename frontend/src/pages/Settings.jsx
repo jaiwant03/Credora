@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
   Cpu, Shield, Sliders, CheckCircle, XCircle,
-  Save, RefreshCw, Eye, EyeOff,
+  Save, RefreshCw, Eye, EyeOff, Sun, Moon,
 } from 'lucide-react';
 import { getSettings, updateSettings, toggleAgent } from '../services/api';
 import { SkeletonCard } from '../components/ui/Skeleton';
@@ -15,6 +15,32 @@ export default function Settings() {
   const [saved, setSaved] = useState(false);
   const [verForm, setVerForm] = useState({});
   const [scoreForm, setScoreForm] = useState({});
+  const [currentTheme, setCurrentTheme] = useState(() => {
+    return localStorage.getItem('verifyai_theme') || 'light';
+  });
+
+  function applyTheme(newTheme) {
+    setCurrentTheme(newTheme);
+    localStorage.setItem('verifyai_theme', newTheme);
+    if (newTheme === 'dark') {
+      document.documentElement.setAttribute('data-theme', 'dark');
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+      document.documentElement.classList.remove('dark');
+    }
+    window.dispatchEvent(new CustomEvent('verifyai_theme_change', { detail: { theme: newTheme } }));
+  }
+
+  useEffect(() => {
+    function handleThemeChange(e) {
+      if (e?.detail?.theme) {
+        setCurrentTheme(e.detail.theme);
+      }
+    }
+    window.addEventListener('verifyai_theme_change', handleThemeChange);
+    return () => window.removeEventListener('verifyai_theme_change', handleThemeChange);
+  }, []);
 
   async function load() {
     setLoading(true);
@@ -201,23 +227,66 @@ export default function Settings() {
           {/* Appearance */}
           <div className="card" style={{ padding: 22 }}>
             <div className="settings-section-header">
-              <div className="settings-section-icon"><Shield size={16} color="#19C463" /></div>
+              <div className="settings-section-icon" style={{ background: 'var(--brand-light)' }}>
+                <Shield size={16} color="var(--brand-primary)" />
+              </div>
               <div>
-                <h3>Appearance</h3>
-                <p style={{ fontSize: '0.8125rem', marginTop: 2 }}>Visual mode configuration.</p>
+                <h3>Appearance & Theme</h3>
+                <p style={{ fontSize: '0.8125rem', marginTop: 2 }}>
+                  Configure visual interface mode (Pure White light mode or Deep Obsidian dark mode).
+                </p>
               </div>
             </div>
-            <div style={{ marginTop: 16, display: 'flex', gap: 12 }}>
-              <div style={{
-                flex: 1, padding: '14px 16px', border: '2px solid var(--green-primary)',
-                borderRadius: 10, background: 'var(--green-light)', cursor: 'default',
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <CheckCircle size={15} color="var(--green-dark)" />
-                  <span style={{ fontWeight: 500, fontSize: '0.875rem', color: 'var(--green-dark)' }}>Light Mode</span>
+            <div style={{ marginTop: 16, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14 }}>
+              {/* Light Mode Card */}
+              <div
+                onClick={() => applyTheme('light')}
+                style={{
+                  padding: '16px 18px',
+                  border: `2px solid ${currentTheme === 'light' ? 'var(--brand-primary)' : 'var(--border)'}`,
+                  borderRadius: 12,
+                  background: currentTheme === 'light' ? 'var(--brand-light)' : 'var(--bg-card)',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <Sun size={17} color={currentTheme === 'light' ? 'var(--brand-primary)' : 'var(--text-muted)'} />
+                    <span style={{ fontWeight: 650, fontSize: '0.9375rem', color: currentTheme === 'light' ? 'var(--brand-primary)' : 'var(--text-primary)' }}>
+                      Pure White Light
+                    </span>
+                  </div>
+                  {currentTheme === 'light' && <CheckCircle size={17} color="var(--brand-primary)" />}
                 </div>
-                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 4, marginBottom: 0 }}>
-                  White and green — the default VerifyAI theme.
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0 }}>
+                  Crisp pure bright white canvas with electric indigo truth accents.
+                </p>
+              </div>
+
+              {/* Dark Mode Card */}
+              <div
+                onClick={() => applyTheme('dark')}
+                style={{
+                  padding: '16px 18px',
+                  border: `2px solid ${currentTheme === 'dark' ? 'var(--brand-primary)' : 'var(--border)'}`,
+                  borderRadius: 12,
+                  background: currentTheme === 'dark' ? 'var(--brand-light)' : 'var(--bg-card)',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <Moon size={17} color={currentTheme === 'dark' ? 'var(--brand-primary)' : 'var(--text-muted)'} />
+                    <span style={{ fontWeight: 650, fontSize: '0.9375rem', color: currentTheme === 'dark' ? 'var(--brand-primary)' : 'var(--text-primary)' }}>
+                      Pitch Black Dark
+                    </span>
+                  </div>
+                  {currentTheme === 'dark' && <CheckCircle size={17} color="var(--brand-primary)" />}
+                </div>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0 }}>
+                  Pitch obsidian black appearance with high-contrast luminous white text.
                 </p>
               </div>
             </div>

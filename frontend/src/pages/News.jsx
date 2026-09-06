@@ -9,6 +9,8 @@ import { getLiveNews, searchNews } from '../services/api';
 
 const CATEGORIES = [
   { id: 'all', label: 'All Breaking', icon: Flame },
+  { id: 'tamil', label: 'Tamil News (தமிழ்)', icon: Globe },
+  { id: 'india', label: 'India News', icon: Radio },
   { id: 'technology', label: 'Technology', icon: Zap },
   { id: 'world', label: 'World News', icon: Globe },
   { id: 'business', label: 'Business & Finance', icon: TrendingUp },
@@ -85,6 +87,19 @@ export default function News() {
     } catch {
       return 'Recently';
     }
+  }
+
+  function cleanSnippet(snippet, title, publisher) {
+    if (!snippet) return `Live breaking news coverage from ${publisher || 'verified sources'}.`;
+    const cleaned = snippet
+      .replace(/<[^>]*>/g, ' ')
+      .replace(/&[a-z0-9#]+;/gi, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (cleaned.length < 15 || cleaned === title) {
+      return `Real-time report published by ${publisher || 'news wire'} regarding "${title}". Fact-check with VerifyAI multi-agent engine.`;
+    }
+    return cleaned;
   }
 
   return (
@@ -209,9 +224,19 @@ export default function News() {
           {articles.map((article) => (
             <div key={article.id || article.link} className="card news-card fade-in-up">
               <div className="news-card-header">
-                <span className="news-publisher-tag">
-                  {article.publisher || 'Verified News'}
-                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', flex: 1, minWidth: 0 }}>
+                  <span className="news-publisher-tag">
+                    {article.publisher || 'Verified News'}
+                  </span>
+                  {article.credible && (
+                    <span className="news-trusted-badge" title="High-reputation verified wire source">
+                      <ShieldCheck size={11} /> Trusted Source
+                    </span>
+                  )}
+                  {(article.language === 'ta' || /[\u0B80-\u0BFF]/.test(article.title || '')) && (
+                    <span className="news-tamil-badge">தமிழ்</span>
+                  )}
+                </div>
                 <span className="news-time">
                   <Clock size={12} style={{ marginRight: 4 }} />
                   {formatTimeAgo(article.publishedAt || article.pubDate)}
@@ -220,7 +245,7 @@ export default function News() {
 
               <h3 className="news-title">{article.title}</h3>
 
-              <p className="news-snippet">{article.snippet}</p>
+              <p className="news-snippet">{cleanSnippet(article.snippet, article.title, article.publisher)}</p>
 
               <div className="news-card-footer">
                 <a
@@ -284,14 +309,14 @@ export default function News() {
           display: inline-flex;
           align-items: center;
           gap: 6px;
-          background: #ECFDF5;
-          color: #059669;
+          background: var(--emerald-light);
+          color: var(--emerald-dark);
           font-size: 0.6875rem;
           font-weight: 700;
           letter-spacing: 0.06em;
           padding: 4px 10px;
           border-radius: 999px;
-          border: 1px solid #A7F3D0;
+          border: 1px solid var(--emerald-border);
           margin-bottom: 8px;
         }
 
@@ -324,7 +349,7 @@ export default function News() {
         .news-search-box {
           display: flex;
           align-items: center;
-          background: #fff;
+          background: var(--bg-card);
           border: 1px solid var(--border);
           border-radius: var(--radius-md);
           padding: 4px 6px 4px 14px;
@@ -334,8 +359,8 @@ export default function News() {
         }
 
         .news-search-box:focus-within {
-          border-color: var(--green-primary);
-          box-shadow: 0 0 0 3px rgba(25, 196, 99, 0.15);
+          border-color: var(--brand-secondary);
+          box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15), var(--shadow-sm);
         }
 
         .news-search-icon {
@@ -371,86 +396,122 @@ export default function News() {
           display: flex;
           gap: 8px;
           overflow-x: auto;
-          padding-bottom: 4px;
+          padding-bottom: 6px;
           scrollbar-width: thin;
         }
 
         .news-cat-pill {
           display: flex;
           align-items: center;
-          gap: 6px;
-          padding: 7px 14px;
-          background: #fff;
+          gap: 7px;
+          padding: 7px 15px;
+          background: var(--bg-card);
           border: 1px solid var(--border);
           border-radius: 999px;
           font-size: 0.8125rem;
-          font-weight: 500;
+          font-weight: 550;
           color: var(--text-secondary);
           cursor: pointer;
           white-space: nowrap;
-          transition: all 0.15s ease;
+          transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .news-cat-pill:hover {
-          background: var(--bg-subtle);
-          color: var(--text-primary);
+          background: var(--bg-gray);
+          color: var(--brand-primary);
+          border-color: var(--border-hover);
         }
 
         .news-cat-pill--active {
-          background: var(--green-primary);
-          color: #fff;
-          border-color: var(--green-primary);
-          box-shadow: 0 2px 8px rgba(25, 196, 99, 0.3);
+          background: var(--brand-light);
+          color: var(--brand-primary);
+          border-color: rgba(99, 102, 241, 0.4);
+          font-weight: 650;
+          box-shadow: 0 1px 6px rgba(99, 102, 241, 0.15);
         }
 
         .search-status-bar {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          padding: 8px 12px;
-          background: var(--bg-subtle);
+          padding: 10px 16px;
+          background: var(--brand-light);
           border-radius: var(--radius-sm);
           font-size: 0.875rem;
-          color: var(--text-secondary);
+          color: var(--brand-hover);
+          border: 1px solid rgba(99, 102, 241, 0.2);
         }
 
         .news-grid {
           display: grid;
           grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-          gap: 18px;
+          gap: 20px;
         }
 
         .news-card {
           display: flex;
           flex-direction: column;
-          padding: 18px;
-          transition: transform 0.2s, box-shadow 0.2s;
-          border-left: 3px solid transparent;
+          padding: 22px;
+          background: var(--bg-card);
+          border: 1px solid var(--border);
+          border-radius: var(--radius-md);
+          box-shadow: var(--shadow-sm);
+          transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .news-card:hover {
-          transform: translateY(-2px);
-          box-shadow: var(--shadow-md);
-          border-left-color: var(--green-primary);
+          transform: translateY(-3px);
+          box-shadow: 0 14px 28px -6px rgba(15, 23, 42, 0.08), 0 0 0 1px rgba(99, 102, 241, 0.25);
+          border-color: rgba(99, 102, 241, 0.35);
         }
 
         .news-card-header {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          margin-bottom: 10px;
+          margin-bottom: 12px;
         }
 
         .news-publisher-tag {
-          font-size: 0.75rem;
-          font-weight: 600;
-          color: var(--green-dark);
-          background: var(--green-light);
+          font-size: 0.725rem;
+          font-weight: 700;
+          color: var(--brand-primary);
+          background: var(--brand-light);
+          border: 1px solid rgba(99, 102, 241, 0.2);
           padding: 3px 8px;
           border-radius: 6px;
           max-width: 180px;
           overflow: hidden;
           text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .news-trusted-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 3px;
+          font-size: 0.6875rem;
+          font-weight: 700;
+          color: var(--emerald-dark);
+          background: var(--emerald-light);
+          border: 1px solid var(--emerald-border);
+          padding: 2px 7px;
+          border-radius: 6px;
+          letter-spacing: 0.02em;
+          white-space: nowrap;
+        }
+
+        .news-tamil-badge {
+          display: inline-flex;
+          align-items: center;
+          font-size: 0.6875rem;
+          font-weight: 700;
+          color: var(--warning);
+          background: var(--warning-light);
+          border: 1px solid var(--warning-border);
+          padding: 2px 6px;
+          border-radius: 6px;
+          letter-spacing: 0.02em;
           white-space: nowrap;
         }
 

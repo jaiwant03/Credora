@@ -39,9 +39,15 @@ export const getVerificationById = (id) =>
 export const deleteVerification = (id) =>
   api.delete(`/verifications/${id}`);
 
+export const clearAllVerifications = () =>
+  api.delete('/verifications');
+
 // ── Analytics ───────────────────────────────────────────
 export const getAnalytics = () =>
   api.get('/analytics');
+
+export const clearAnalytics = () =>
+  api.post('/analytics/clear');
 
 // ── Sources ─────────────────────────────────────────────
 export const getSources = (params = {}) =>

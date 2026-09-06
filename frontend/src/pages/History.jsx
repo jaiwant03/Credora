@@ -2,9 +2,9 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Search, Eye, ShieldCheck, Filter, ArrowUpDown,
-  Download, Trash2, X, AlertCircle
+  Download, Trash2, X, AlertCircle, CheckCircle2
 } from 'lucide-react';
-import { getVerifications, deleteVerification } from '../services/api';
+import { getVerifications, deleteVerification, clearAllVerifications } from '../services/api';
 import StatusBadge from '../components/ui/StatusBadge';
 import ConfidenceScore from '../components/ui/ConfidenceScore';
 import { SkeletonTable } from '../components/ui/Skeleton';
@@ -34,6 +34,9 @@ export default function History() {
   // Delete modal state
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
+  const [showClearAllModal, setShowClearAllModal] = useState(false);
+  const [clearingAll, setClearingAll] = useState(false);
+  const [toastMsg, setToastMsg] = useState(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -86,6 +89,22 @@ export default function History() {
     }
   }
 
+  async function handleConfirmClearAll() {
+    setClearingAll(true);
+    try {
+      await clearAllVerifications();
+      setVerifications([]);
+      setTotal(0);
+      setShowClearAllModal(false);
+      setToastMsg('All verification history permanently cleared');
+      setTimeout(() => setToastMsg(null), 3500);
+    } catch (err) {
+      alert(`Failed to clear history: ${err.message}`);
+    } finally {
+      setClearingAll(false);
+    }
+  }
+
   // Client-side sorting for responsive instant UI updates
   const sortedVerifications = [...verifications].sort((a, b) => {
     const scoreA = a.confidenceScore ?? a.confidence ?? 0;
@@ -102,16 +121,39 @@ export default function History() {
 
   return (
     <div className="page-content fade-in">
+      {/* Toast Notification */}
+      {toastMsg && (
+        <div className="toast-container">
+          <div className="toast">
+            <CheckCircle2 size={18} color="var(--emerald-primary)" />
+            <span>{toastMsg}</span>
+          </div>
+        </div>
+      )}
+
       <div className="page-header" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
         <div>
           <h1>Verification History</h1>
           <p>Review, search, and analyze previously fact-checked questions and multi-agent reports.</p>
         </div>
-        {verifications.length > 0 && (
-          <button className="btn btn-secondary" onClick={handleExportAll} style={{ gap: 7 }}>
-            <Download size={15} /> Export History (JSON)
-          </button>
-        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          {verifications.length > 0 && (
+            <>
+              <button
+                className="btn btn-secondary"
+                onClick={() => setShowClearAllModal(true)}
+                style={{ color: 'var(--error)', gap: 6 }}
+                title="Permanently remove all history records"
+              >
+                <Trash2 size={14} color="var(--error)" />
+                <span>Clear All History</span>
+              </button>
+              <button className="btn btn-secondary" onClick={handleExportAll} style={{ gap: 7 }}>
+                <Download size={15} /> Export History (JSON)
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Search + filter + sort toolbar */}
@@ -320,6 +362,41 @@ export default function History() {
               </button>
               <button className="btn btn-danger" onClick={handleConfirmDelete} disabled={deleting}>
                 {deleting ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Clear All Confirmation Modal */}
+      {showClearAllModal && (
+        <div className="modal-backdrop" onClick={() => setShowClearAllModal(false)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 440 }}>
+            <div className="modal-header">
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Trash2 size={18} color="var(--error)" />
+                <h3 style={{ fontSize: '1.0625rem' }}>Clear All History</h3>
+              </div>
+              <button className="btn btn-ghost btn-sm" onClick={() => setShowClearAllModal(false)} style={{ padding: 4 }}>
+                <X size={16} />
+              </button>
+            </div>
+            <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                Are you sure you want to permanently delete <strong>all {total}</strong> verification records from the database? This action cannot be undone.
+              </p>
+              <div style={{ padding: '10px 12px', background: 'var(--error-light)', borderRadius: 8, border: '1px solid var(--error-border)' }}>
+                <div style={{ fontWeight: 600, fontSize: '0.8125rem', color: 'var(--error)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <AlertCircle size={15} /> All verification records and cached findings will be wiped.
+                </div>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-secondary" onClick={() => setShowClearAllModal(false)} disabled={clearingAll}>
+                Cancel
+              </button>
+              <button className="btn btn-danger" onClick={handleConfirmClearAll} disabled={clearingAll}>
+                {clearingAll ? 'Clearing All...' : 'Yes, Clear All History'}
               </button>
             </div>
           </div>

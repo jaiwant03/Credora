@@ -62,20 +62,21 @@ export function formatDate(dateStr) {
 }
 
 export function getConfidenceColor(score) {
-  if (score >= 90) return '#16A34A';
-  if (score >= 75) return '#19C463';
-  if (score >= 60) return '#F59E0B';
-  if (score >= 40) return '#F97316';
-  return '#DC2626';
+  if (score >= 90) return '#059669'; // Vivid Emerald
+  if (score >= 75) return '#10B981'; // Mint Emerald
+  if (score >= 60) return '#F59E0B'; // Amber
+  if (score >= 40) return '#F97316'; // Tangerine
+  return '#F43F5E'; // Rose
 }
 
 export function getStatusColor(status) {
   switch (status) {
-    case 'verified': return { bg: '#F0FDF4', text: '#16A34A', border: '#BBF7D0' };
-    case 'conflict_resolved': return { bg: '#FFF7ED', text: '#C2410C', border: '#FED7AA' };
-    case 'low_confidence': return { bg: '#FFFBEB', text: '#B45309', border: '#FDE68A' };
-    case 'unable_to_verify': return { bg: '#FEF2F2', text: '#DC2626', border: '#FECACA' };
-    default: return { bg: '#F9FAFB', text: '#6B7280', border: '#E5E7EB' };
+    case 'verified': return { bg: '#ECFDF5', text: '#059669', border: '#A7F3D0' };
+    case 'conflict_resolved': return { bg: '#FFFBEB', text: '#D97706', border: '#FDE68A' };
+    case 'low_confidence': return { bg: '#FFF7ED', text: '#C2410C', border: '#FED7AA' };
+    case 'unable_to_verify': return { bg: '#FFF1F2', text: '#E11D48', border: '#FECDD3' };
+    case 'pending': return { bg: '#EEF2FF', text: '#4F46E5', border: '#C7D2FE' };
+    default: return { bg: '#F8FAFC', text: '#64748B', border: '#E2E8F0' };
   }
 }
 
