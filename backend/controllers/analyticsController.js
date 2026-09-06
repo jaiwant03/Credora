@@ -141,4 +141,17 @@ async function getAnalytics(req, res, next) {
   }
 }
 
-module.exports = { getAnalytics };
+async function clearAnalytics(req, res, next) {
+  try {
+    const result = await Verification.deleteMany({});
+    res.json({
+      success: true,
+      message: 'All verification statistics and data reset successfully',
+      deletedCount: result.deletedCount || 0,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { getAnalytics, clearAnalytics };

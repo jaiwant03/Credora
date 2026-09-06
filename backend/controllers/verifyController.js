@@ -85,6 +85,19 @@ async function deleteVerification(req, res, next) {
   }
 }
 
+async function clearAllVerifications(req, res, next) {
+  try {
+    const result = await Verification.deleteMany({});
+    res.json({
+      success: true,
+      message: 'All verification records cleared successfully',
+      deletedCount: result.deletedCount || 0,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
 function formatVerification(doc) {
   const initialAnswer = doc.initialAnswer || doc.initial_answer || '';
   const finalAnswer = doc.finalAnswer || doc.final_answer || '';
@@ -127,4 +140,4 @@ function formatVerification(doc) {
   };
 }
 
-module.exports = { handleVerify, getVerifications, getVerificationById, deleteVerification };
+module.exports = { handleVerify, getVerifications, getVerificationById, deleteVerification, clearAllVerifications };

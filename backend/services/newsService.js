@@ -10,6 +10,8 @@ const GOOGLE_NEWS_RSS_BASE = 'https://news.google.com/rss';
 
 const TOPIC_MAP = {
   all: `${GOOGLE_NEWS_RSS_BASE}?hl=en-US&gl=US&ceid=US:en`,
+  tamil: `https://news.google.com/rss?hl=ta&gl=IN&ceid=IN:ta`,
+  india: `${GOOGLE_NEWS_RSS_BASE}/headlines/section/topic/NATION?hl=en-IN&gl=IN&ceid=IN:en`,
   world: `${GOOGLE_NEWS_RSS_BASE}/headlines/section/topic/WORLD?hl=en-US&gl=US&ceid=US:en`,
   technology: `${GOOGLE_NEWS_RSS_BASE}/headlines/section/topic/TECHNOLOGY?hl=en-US&gl=US&ceid=US:en`,
   business: `${GOOGLE_NEWS_RSS_BASE}/headlines/section/topic/BUSINESS?hl=en-US&gl=US&ceid=US:en`,
@@ -69,15 +71,17 @@ function parseRssFeed(xmlString, category = 'general') {
     let snippet = '';
     const descMatch = itemXml.match(/<description>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/description>/i);
     if (descMatch) {
-      snippet = descMatch[1]
-        .replace(/<a[^>]*>([\s\S]*?)<\/a>/gi, '$1')
-        .replace(/<\/?[^>]+(>|$)/g, '')
+      let rawDesc = decodeHtmlEntities(descMatch[1]);
+      snippet = rawDesc
+        .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+        .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+        .replace(/<\/?[^>]+(>|$)/g, ' ')
+        .replace(/\s+/g, ' ')
         .trim();
-      snippet = decodeHtmlEntities(snippet);
     }
 
-    if (!snippet || snippet.length < 10) {
-      snippet = `Breaking news report from ${publisher} regarding: ${title}.`;
+    if (!snippet || snippet.length < 15 || snippet === title) {
+      snippet = `Breaking news coverage from ${publisher} covering: ${title}. Verify this report against verified facts.`;
     }
 
     if (title && link) {
@@ -110,27 +114,74 @@ function decodeHtmlEntities(str) {
     .replace(/&nbsp;/g, ' ');
 }
 
+const TRUSTED_PUBLISHERS = [
+  'reuters', 'associated press', 'ap', 'bbc', 'the hindu', 'dinamalar', 'dinamani',
+  'abp nadu', 'abp news', 'puthiyathalaimurai', 'polimer news', 'daily thanthi',
+  'hindu tamil', 'ndtv', 'indian express', 'the times of india', 'bloomberg', 'npr',
+  'the guardian', 'france 24', 'al jazeera', 'nature', 'science', 'mit technology review'
+];
+
+function isCrediblePublisher(publisher) {
+  if (!publisher) return false;
+  const p = publisher.toLowerCase();
+  return TRUSTED_PUBLISHERS.some(t => p.includes(t));
+}
+
 /**
- * Fetch live news by category
+ * Fetch live news by category with multi-source enrichment for Tamil and Breaking news
  */
-async function getNewsByCategory(category = 'all', limit = 20) {
+async function getNewsByCategory(category = 'all', limit = 24) {
   const catKey = (category || 'all').toLowerCase();
   const feedUrl = TOPIC_MAP[catKey] || TOPIC_MAP.all;
 
   try {
-    const response = await axios.get(feedUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'application/rss+xml, application/xml, text/xml, */*',
-      },
-      timeout: 10000,
+    const requests = [
+      axios.get(feedUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'application/rss+xml, application/xml, text/xml, */*',
+        },
+        timeout: 10000,
+      }),
+    ];
+
+    // If Tamil category, also fetch BBC Tamil RSS for high-reputation fact-based journalism
+    if (catKey === 'tamil') {
+      requests.push(
+        axios.get('https://feeds.bbci.co.uk/tamil/rss.xml', {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'application/rss+xml, application/xml, text/xml, */*',
+          },
+          timeout: 8000,
+        }).catch(() => null)
+      );
+    }
+
+    const responses = await Promise.all(requests);
+    let allItems = [];
+
+    responses.forEach(res => {
+      if (res && res.data) {
+        const parsed = parseRssFeed(res.data, catKey);
+        allItems.push(...parsed);
+      }
     });
 
-    const items = parseRssFeed(response.data, catKey);
-    return items.slice(0, limit);
+    // Deduplicate by title
+    const seenTitles = new Set();
+    const uniqueItems = allItems.filter(item => {
+      const simplified = item.title.slice(0, 40).toLowerCase();
+      if (seenTitles.has(simplified)) return false;
+      seenTitles.add(simplified);
+      item.credible = isCrediblePublisher(item.publisher);
+      item.language = catKey === 'tamil' ? 'ta' : 'en';
+      return true;
+    });
+
+    return uniqueItems.slice(0, limit);
   } catch (err) {
     console.warn(`[News Service] Failed to fetch news for category "${category}":`, err.message);
-    // Fallback to top stories feed if category fails
     if (catKey !== 'all') {
       return getNewsByCategory('all', limit);
     }

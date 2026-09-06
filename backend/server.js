@@ -42,13 +42,13 @@ app.use(cors({
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: process.env.NODE_ENV === 'production' ? 100 : 2000,
   message: { error: true, message: 'Too many requests, please try again later.' },
 });
 
 const verifyLimiter = rateLimit({
   windowMs: 60 * 1000,
-  max: 20,
+  max: process.env.NODE_ENV === 'production' ? 20 : 500,
   message: { error: true, message: 'Too many verification requests, please wait a moment.' },
 });
 
