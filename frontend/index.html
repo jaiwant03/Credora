@@ -12,10 +12,13 @@
     <script>
       (function() {
         try {
-          var t = localStorage.getItem('verifyai_theme');
-          if (t === 'dark') {
+          var saved = localStorage.getItem('verifyai_theme') || 'light';
+          if (saved === 'dark') {
             document.documentElement.setAttribute('data-theme', 'dark');
             document.documentElement.classList.add('dark');
+          } else {
+            document.documentElement.removeAttribute('data-theme');
+            document.documentElement.classList.remove('dark');
           }
         } catch (e) {}
       })();

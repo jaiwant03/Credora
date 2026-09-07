@@ -1,48 +1,58 @@
-import { getConfidenceColor, formatConfidenceLevel } from '../../utils/formatters';
+import { formatConfidenceLevel } from '../../utils/formatters';
+
+export function getConfidenceColor(score) {
+  if (score >= 75) return '#10B981'; // Master Green
+  if (score >= 40) return '#F59E0B'; // Master Orange
+  return '#EF4444'; // Master Red
+}
 
 export default function ConfidenceScore({
-  score,
+  score = 0,
   level,
   size = 'md',
   showBar = true,
-  variant = 'bar', // 'bar' | 'radial' | 'pill'
+  variant = 'radial', // 'radial' | 'bar'
+  showLabel = false,
 }) {
-  const color = getConfidenceColor(score);
+  const numScore = Math.round(Number(score) || 0);
+  const color = getConfidenceColor(numScore);
   const label = formatConfidenceLevel(level);
 
-  const sizes = {
-    sm: { score: '1.25rem', label: '0.6875rem', barH: 5, radius: 14, stroke: 3 },
-    md: { score: '2rem', label: '0.75rem', barH: 7, radius: 24, stroke: 4 },
-    lg: { score: '2.75rem', label: '0.875rem', barH: 9, radius: 36, stroke: 5 },
+  const radialSizes = {
+    sm: { size: 40, radius: 15, stroke: 3.5, fontSize: '0.75rem' },
+    md: { size: 50, radius: 19, stroke: 4.5, fontSize: '0.875rem' },
+    lg: { size: 76, radius: 30, stroke: 6, fontSize: '1.25rem' },
   };
-  const s = sizes[size] || sizes.md;
+  const rs = radialSizes[size] || radialSizes.md;
 
   if (variant === 'radial') {
-    const circumference = 2 * Math.PI * s.radius;
-    const strokeDashoffset = circumference - (score / 100) * circumference;
+    const circumference = 2 * Math.PI * rs.radius;
+    const strokeDashoffset = circumference - (numScore / 100) * circumference;
 
     return (
-      <div className="confidence-score-radial" style={{ display: 'inline-flex', alignItems: 'center', gap: 12 }}>
-        <div style={{ position: 'relative', width: s.radius * 2 + s.stroke * 2, height: s.radius * 2 + s.stroke * 2 }}>
+      <div className="confidence-score-radial" style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ position: 'relative', width: rs.size, height: rs.size }}>
           <svg
-            width={s.radius * 2 + s.stroke * 2}
-            height={s.radius * 2 + s.stroke * 2}
-            style={{ transform: 'rotate(-90deg)' }}
+            width={rs.size}
+            height={rs.size}
+            style={{ transform: 'rotate(-90deg)', overflow: 'visible' }}
           >
+            {/* Background track */}
             <circle
-              cx={s.radius + s.stroke}
-              cy={s.radius + s.stroke}
-              r={s.radius}
-              stroke="var(--border-light)"
-              strokeWidth={s.stroke}
+              cx={rs.size / 2}
+              cy={rs.size / 2}
+              r={rs.radius}
+              stroke="#E5EAF1"
+              strokeWidth={rs.stroke}
               fill="none"
             />
+            {/* Progress arc */}
             <circle
-              cx={s.radius + s.stroke}
-              cy={s.radius + s.stroke}
-              r={s.radius}
+              cx={rs.size / 2}
+              cy={rs.size / 2}
+              r={rs.radius}
               stroke={color}
-              strokeWidth={s.stroke}
+              strokeWidth={rs.stroke}
               fill="none"
               strokeDasharray={circumference}
               strokeDashoffset={strokeDashoffset}
@@ -58,17 +68,18 @@ export default function ConfidenceScore({
               alignItems: 'center',
               justifyContent: 'center',
               fontWeight: 750,
-              fontSize: size === 'sm' ? '0.75rem' : '0.9375rem',
-              color,
+              fontSize: rs.fontSize,
+              color: 'var(--primary-navy)',
               fontFamily: 'var(--font-display)',
+              letterSpacing: '-0.02em',
             }}
           >
-            {score}%
+            {numScore}%
           </div>
         </div>
-        {label && (
+        {showLabel && label && (
           <div>
-            <div style={{ fontSize: s.label, fontWeight: 700, color, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+            <div style={{ fontSize: '0.8125rem', fontWeight: 700, color, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
               {label}
             </div>
             <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)' }}>Confidence</div>
@@ -79,7 +90,7 @@ export default function ConfidenceScore({
   }
 
   return (
-    <div className="confidence-score" style={{ minWidth: size === 'sm' ? 75 : 120 }}>
+    <div className="confidence-score" style={{ minWidth: size === 'sm' ? 80 : 120 }}>
       <div style={{
         display: 'flex',
         alignItems: 'baseline',
@@ -88,21 +99,21 @@ export default function ConfidenceScore({
       }}>
         <span style={{
           fontFamily: 'var(--font-display)',
-          fontSize: s.score,
+          fontSize: size === 'sm' ? '1.125rem' : '1.5rem',
           fontWeight: 800,
-          color,
+          color: 'var(--primary-navy)',
           lineHeight: 1,
           letterSpacing: '-0.02em',
         }}>
-          {score}%
+          {numScore}%
         </span>
-        {label && (
+        {showLabel && label && (
           <span style={{
-            fontSize: s.label,
+            fontSize: '0.75rem',
             fontWeight: 700,
             color,
             textTransform: 'uppercase',
-            letterSpacing: '0.06em',
+            letterSpacing: '0.04em',
           }}>
             {label}
           </span>
@@ -113,17 +124,16 @@ export default function ConfidenceScore({
         <div
           className="progress-bar"
           style={{
-            height: s.barH,
-            background: 'var(--border-light)',
+            height: size === 'sm' ? 5 : 7,
+            background: '#F1F5F9',
             borderRadius: 999,
           }}
         >
           <div
             className="progress-fill"
             style={{
-              width: `${score}%`,
-              background: `linear-gradient(90deg, ${color} 0%, ${color}DD 100%)`,
-              boxShadow: `0 0 10px ${color}55`,
+              width: `${numScore}%`,
+              background: color,
             }}
           />
         </div>

@@ -2,7 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Search, Eye, ShieldCheck, Filter, ArrowUpDown,
-  Download, Trash2, X, AlertCircle, CheckCircle2
+  Download, Trash2, X, AlertCircle, CheckCircle2,
+  Clock, Link2, MoreVertical
 } from 'lucide-react';
 import { getVerifications, deleteVerification, clearAllVerifications } from '../services/api';
 import StatusBadge from '../components/ui/StatusBadge';
@@ -29,7 +30,7 @@ export default function History() {
   const [search, setSearch] = useState(searchParams.get('search') || '');
   const [searchInput, setSearchInput] = useState(searchParams.get('search') || '');
   const [activeFilter, setActiveFilter] = useState('all');
-  const [sortBy, setSortBy] = useState('newest'); // newest, oldest, highest_conf, lowest_conf
+  const [sortBy, setSortBy] = useState('newest');
 
   // Delete modal state
   const [deleteTarget, setDeleteTarget] = useState(null);
@@ -82,6 +83,8 @@ export default function History() {
       setVerifications(prev => prev.filter(v => v.id !== deleteTarget.id && v._id !== deleteTarget._id));
       setTotal(prev => Math.max(0, prev - 1));
       setDeleteTarget(null);
+      setToastMsg('Record deleted successfully');
+      setTimeout(() => setToastMsg(null), 3000);
     } catch (err) {
       alert(`Failed to delete: ${err.message}`);
     } finally {
@@ -105,7 +108,7 @@ export default function History() {
     }
   }
 
-  // Client-side sorting for responsive instant UI updates
+  // Client-side sorting
   const sortedVerifications = [...verifications].sort((a, b) => {
     const scoreA = a.confidenceScore ?? a.confidence ?? 0;
     const scoreB = b.confidenceScore ?? b.confidence ?? 0;
@@ -125,16 +128,21 @@ export default function History() {
       {toastMsg && (
         <div className="toast-container">
           <div className="toast">
-            <CheckCircle2 size={18} color="var(--emerald-primary)" />
+            <CheckCircle2 size={18} color="#10B981" />
             <span>{toastMsg}</span>
           </div>
         </div>
       )}
 
-      <div className="page-header" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
+      {/* Page Header */}
+      <div className="page-header" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, marginBottom: 24 }}>
         <div>
-          <h1>Verification History</h1>
-          <p>Review, search, and analyze previously fact-checked questions and multi-agent reports.</p>
+          <h1 style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--primary-navy)', letterSpacing: '-0.03em', marginBottom: 6 }}>
+            Verification <span className="hero-text-gradient">History</span>
+          </h1>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9375rem' }}>
+            Review, search, and analyze previously fact-checked questions and multi-agent reports.
+          </p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           {verifications.length > 0 && (
@@ -142,38 +150,39 @@ export default function History() {
               <button
                 className="btn btn-secondary"
                 onClick={() => setShowClearAllModal(true)}
-                style={{ color: 'var(--error)', gap: 6 }}
+                style={{ color: '#EF4444', borderColor: '#FECDD3', gap: 6 }}
                 title="Permanently remove all history records"
               >
-                <Trash2 size={14} color="var(--error)" />
+                <Trash2 size={14} color="#EF4444" />
                 <span>Clear All History</span>
               </button>
               <button className="btn btn-secondary" onClick={handleExportAll} style={{ gap: 7 }}>
-                <Download size={15} /> Export History (JSON)
+                <Download size={15} color="#1687E8" />
+                <span>Export History (JSON)</span>
               </button>
             </>
           )}
         </div>
       </div>
 
-      {/* Search + filter + sort toolbar */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 20 }}>
+      {/* Search + Filter + Sort Toolbar */}
+      <div className="card" style={{ padding: 18, marginBottom: 22, display: 'flex', flexDirection: 'column', gap: 14 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
           
           {/* Search bar */}
-          <form onSubmit={handleSearch} style={{ display: 'flex', alignItems: 'center', gap: 8, flex: '1 1 300px' }}>
-            <div style={{ position: 'relative', width: '100%', maxWidth: 360 }}>
-              <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }} />
+          <form onSubmit={handleSearch} style={{ display: 'flex', alignItems: 'center', gap: 8, flex: '1 1 320px' }}>
+            <div style={{ position: 'relative', width: '100%', maxWidth: 380 }}>
+              <Search size={15} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }} />
               <input
                 type="text"
                 className="input"
                 placeholder="Search questions or answers..."
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
-                style={{ paddingLeft: 32, height: 38 }}
+                style={{ paddingLeft: 34, height: 40 }}
               />
             </div>
-            <button type="submit" className="btn btn-secondary" style={{ height: 38 }}>
+            <button type="submit" className="btn btn-secondary" style={{ height: 40, padding: '0 16px' }}>
               Search
             </button>
             {search && (
@@ -195,7 +204,7 @@ export default function History() {
               className="input"
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              style={{ width: 170, height: 38, fontSize: '0.8125rem', padding: '6px 10px' }}
+              style={{ width: 175, height: 40, fontSize: '0.8125rem', padding: '6px 12px' }}
             >
               <option value="newest">Newest First</option>
               <option value="oldest">Oldest First</option>
@@ -206,8 +215,11 @@ export default function History() {
         </div>
 
         {/* Filter chips */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-          <Filter size={13} style={{ color: 'var(--text-muted)' }} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', borderTop: '1px solid var(--border)', paddingTop: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-muted)', fontSize: '0.8125rem', fontWeight: 600 }}>
+            <Filter size={13} />
+            <span>Filter:</span>
+          </div>
           {FILTERS.map(({ label, value }) => (
             <button
               key={value}
@@ -223,7 +235,7 @@ export default function History() {
       {/* Results meta */}
       {!loading && !error && (
         <div style={{ marginBottom: 12, fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
-          Showing {sortedVerifications.length} of {total} verifications
+          Showing <strong>{sortedVerifications.length}</strong> of {total} verifications
           {search && ` matching "${search}"`}
         </div>
       )}
@@ -234,9 +246,11 @@ export default function History() {
         <SkeletonTable rows={8} cols={5} />
       ) : sortedVerifications.length === 0 ? (
         <div className="card" style={{ textAlign: 'center', padding: '60px 24px' }}>
-          <div className="empty-state-icon"><ShieldCheck size={26} color="var(--green-primary)" /></div>
-          <h3 style={{ fontSize: '1.0625rem', marginBottom: 6 }}>No verifications found</h3>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: 16 }}>
+          <div style={{ width: 52, height: 52, borderRadius: '50%', background: '#ECFDF5', margin: '0 auto 16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <ShieldCheck size={28} color="#10B981" />
+          </div>
+          <h3 style={{ fontSize: '1.125rem', color: 'var(--primary-navy)', marginBottom: 6 }}>No verifications found</h3>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: 18 }}>
             {search ? `No records found for query "${search}".` : 'Start by asking a question to verify accuracy.'}
           </p>
           <button className="btn btn-primary" onClick={() => navigate('/verify')}>
@@ -244,16 +258,16 @@ export default function History() {
           </button>
         </div>
       ) : (
-        <div className="table-container card">
+        <div className="table-container">
           <table>
             <thead>
               <tr>
-                <th>Question & Category</th>
-                <th>Status</th>
-                <th>Confidence</th>
-                <th>Verified Answer Preview</th>
-                <th>Time</th>
-                <th style={{ textAlign: 'right' }}>Actions</th>
+                <th style={{ width: '38%' }}>Question & Topic</th>
+                <th style={{ width: '12%' }}>Status</th>
+                <th style={{ width: '14%' }}>Confidence</th>
+                <th style={{ width: '22%' }}>Verified Answer Preview</th>
+                <th style={{ width: '8%' }}>Time</th>
+                <th style={{ width: '6%', textAlign: 'right' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -262,9 +276,10 @@ export default function History() {
                 const score = v.confidenceScore ?? v.confidence ?? 0;
                 return (
                   <tr key={vid} style={{ cursor: 'pointer' }} onClick={() => navigate(`/history/${vid}`)}>
-                    <td style={{ maxWidth: 280 }}>
+                    {/* Question */}
+                    <td>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                        <span style={{ fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.4 }}>
+                        <span style={{ fontWeight: 650, color: 'var(--primary-navy)', lineHeight: 1.4, fontSize: '0.875rem' }}>
                           {v.question}
                         </span>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -272,25 +287,31 @@ export default function History() {
                             {formatClassification(v.classification)}
                           </span>
                           {v.conflictDetected && (
-                            <span className="badge badge-yellow" style={{ fontSize: '0.6875rem' }}>
+                            <span className="badge badge-orange" style={{ fontSize: '0.6875rem' }}>
                               Conflict Resolved
                             </span>
                           )}
                         </div>
                       </div>
                     </td>
+
+                    {/* Status Dot */}
                     <td>
-                      <StatusBadge status={v.status} size="sm" />
+                      <StatusBadge status={v.status} size="sm" variant="dot" />
                     </td>
+
+                    {/* Radial Confidence Score */}
                     <td>
-                      <ConfidenceScore score={score} level={v.confidenceLevel} size="sm" />
+                      <ConfidenceScore score={score} level={v.confidenceLevel} size="sm" variant="radial" />
                     </td>
-                    <td style={{ maxWidth: 320 }}>
+
+                    {/* Answer Preview */}
+                    <td>
                       <p style={{
                         fontSize: '0.8125rem',
                         color: 'var(--text-secondary)',
-                        lineHeight: 1.4,
-                        marginBottom: 0,
+                        lineHeight: 1.5,
+                        margin: 0,
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         display: '-webkit-box',
@@ -300,26 +321,30 @@ export default function History() {
                         {v.finalAnswer || v.final_answer || v.answer}
                       </p>
                     </td>
+
+                    {/* Time */}
                     <td>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+                      <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
                         {formatRelativeTime(v.createdAt || v.created_at)}
                       </span>
                     </td>
+
+                    {/* Actions */}
                     <td style={{ textAlign: 'right' }} onClick={(e) => e.stopPropagation()}>
                       <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                         <button
                           className="btn btn-ghost btn-sm"
                           onClick={() => navigate(`/history/${vid}`)}
                           title="View detailed report"
-                          style={{ padding: 6 }}
+                          style={{ padding: '6px 8px' }}
                         >
-                          <Eye size={14} color="var(--text-secondary)" />
+                          <Eye size={14} color="#1687E8" />
                         </button>
                         <button
                           className="btn btn-ghost btn-sm"
                           onClick={() => setDeleteTarget(v)}
                           title="Delete verification"
-                          style={{ padding: 6, color: 'var(--error)' }}
+                          style={{ padding: '6px 8px', color: '#EF4444' }}
                         >
                           <Trash2 size={14} />
                         </button>
@@ -339,7 +364,7 @@ export default function History() {
           <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 440 }}>
             <div className="modal-header">
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <Trash2 size={18} color="var(--error)" />
+                <Trash2 size={18} color="#EF4444" />
                 <h3 style={{ fontSize: '1.0625rem' }}>Delete Verification</h3>
               </div>
               <button className="btn btn-ghost btn-sm" onClick={() => setDeleteTarget(null)} style={{ padding: 4 }}>
@@ -350,8 +375,8 @@ export default function History() {
               <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
                 Are you sure you want to delete this verification record?
               </p>
-              <div style={{ padding: '10px 12px', background: 'var(--bg-gray)', borderRadius: 8, border: '1px solid var(--border)' }}>
-                <div style={{ fontWeight: 600, fontSize: '0.8125rem', color: 'var(--text-primary)' }}>
+              <div style={{ padding: '10px 12px', background: '#F8FAFC', borderRadius: 8, border: '1px solid var(--border)' }}>
+                <div style={{ fontWeight: 600, fontSize: '0.8125rem', color: 'var(--primary-navy)' }}>
                   "{deleteTarget.question}"
                 </div>
               </div>
@@ -374,7 +399,7 @@ export default function History() {
           <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 440 }}>
             <div className="modal-header">
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <Trash2 size={18} color="var(--error)" />
+                <Trash2 size={18} color="#EF4444" />
                 <h3 style={{ fontSize: '1.0625rem' }}>Clear All History</h3>
               </div>
               <button className="btn btn-ghost btn-sm" onClick={() => setShowClearAllModal(false)} style={{ padding: 4 }}>
@@ -385,8 +410,8 @@ export default function History() {
               <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
                 Are you sure you want to permanently delete <strong>all {total}</strong> verification records from the database? This action cannot be undone.
               </p>
-              <div style={{ padding: '10px 12px', background: 'var(--error-light)', borderRadius: 8, border: '1px solid var(--error-border)' }}>
-                <div style={{ fontWeight: 600, fontSize: '0.8125rem', color: 'var(--error)', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div style={{ padding: '10px 12px', background: '#FFF1F2', borderRadius: 8, border: '1px solid #FECDD3' }}>
+                <div style={{ fontWeight: 600, fontSize: '0.8125rem', color: '#EF4444', display: 'flex', alignItems: 'center', gap: 6 }}>
                   <AlertCircle size={15} /> All verification records and cached findings will be wiped.
                 </div>
               </div>
@@ -402,6 +427,15 @@ export default function History() {
           </div>
         </div>
       )}
+
+      <style>{`
+        .hero-text-gradient {
+          background: linear-gradient(135deg, #00A88A 0%, #06B6D4 50%, #1687E8 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          display: inline-block;
+        }
+      `}</style>
     </div>
   );
 }

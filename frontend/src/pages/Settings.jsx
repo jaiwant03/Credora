@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import {
   Cpu, Shield, Sliders, CheckCircle, XCircle,
-  Save, RefreshCw, Eye, EyeOff, Sun, Moon, Activity, Terminal, Workflow, Zap, Sparkles,
+  Save, RefreshCw, Eye, EyeOff, Sun, Moon, Activity, Terminal, Workflow, Zap, Sparkles, Bell
 } from 'lucide-react';
 import { getSettings, updateSettings, toggleAgent, testProvider } from '../services/api';
+import { useNotifications } from '../context/NotificationContext';
 import { SkeletonCard } from '../components/ui/Skeleton';
 import ErrorState from '../components/ui/ErrorState';
 
@@ -15,9 +16,7 @@ export default function Settings() {
   const [saved, setSaved] = useState(false);
   const [verForm, setVerForm] = useState({});
   const [scoreForm, setScoreForm] = useState({});
-  const [currentTheme, setCurrentTheme] = useState(() => {
-    return localStorage.getItem('verifyai_theme') || 'light';
-  });
+  const { theme, setTheme, addNotification } = useNotifications();
 
   function applyTheme(newTheme) {
     setCurrentTheme(newTheme);
@@ -95,26 +94,41 @@ export default function Settings() {
 
   return (
     <div className="page-content fade-in">
-      <div className="page-header">
-        <h1>Settings</h1>
-        <p>Configure AI providers, verification behavior, and scoring weights.</p>
+      {/* Page Header */}
+      <div className="page-header" style={{ marginBottom: 24 }}>
+        <div className="badge badge-blue" style={{ marginBottom: 8, padding: '4px 11px' }}>
+          <Sliders size={13} style={{ marginRight: 4 }} />
+          <span>SYSTEM & MULTI-AGENT CONFIGURATION</span>
+        </div>
+        <h1 style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--primary-navy)', letterSpacing: '-0.03em', margin: '4px 0 8px' }}>
+          Platform <span className="hero-text-gradient">Settings</span>
+        </h1>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9375rem', maxWidth: 720 }}>
+          Configure AI intelligence providers, multi-agent verification threshold rules, scoring weights, and interface aesthetics.
+        </p>
       </div>
 
       {error && <ErrorState message={error} compact />}
 
       <form onSubmit={handleSave}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {/* AI Providers */}
-          <div className="card" style={{ padding: 22 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          {/* AI Providers Section */}
+          <div className="card" style={{ padding: 24 }}>
             <div className="settings-section-header">
-              <div className="settings-section-icon"><Cpu size={16} color="#19C463" /></div>
+              <div className="settings-section-icon" style={{ background: '#ECFDF5' }}>
+                <Cpu size={18} color="#10B981" />
+              </div>
               <div>
-                <h3>AI Providers</h3>
-                <p style={{ fontSize: '0.8125rem', marginTop: 2 }}>Configure API connections for verification agents.</p>
+                <h3 style={{ fontSize: '1.125rem', fontWeight: 750, color: 'var(--primary-navy)', margin: 0 }}>
+                  AI Verification Providers
+                </h3>
+                <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', marginTop: 2 }}>
+                  Configure local and cloud API connections for automated truth agents.
+                </p>
               </div>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 0, marginTop: 16, border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 0, marginTop: 18, border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
               {settings?.providers && Object.entries(settings.providers).map(([key, provider], idx, arr) => (
                 <ProviderRow
                   key={key}
@@ -127,20 +141,26 @@ export default function Settings() {
             </div>
           </div>
 
-          {/* Verification Settings */}
-          <div className="card" style={{ padding: 22 }}>
+          {/* Verification Settings Section */}
+          <div className="card" style={{ padding: 24 }}>
             <div className="settings-section-header">
-              <div className="settings-section-icon"><Shield size={16} color="#19C463" /></div>
+              <div className="settings-section-icon" style={{ background: '#F0F9FF' }}>
+                <Shield size={18} color="#1687E8" />
+              </div>
               <div>
-                <h3>Verification Settings</h3>
-                <p style={{ fontSize: '0.8125rem', marginTop: 2 }}>Control how verification behaves.</p>
+                <h3 style={{ fontSize: '1.125rem', fontWeight: 750, color: 'var(--primary-navy)', margin: 0 }}>
+                  Verification Behavior & Rules
+                </h3>
+                <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', marginTop: 2 }}>
+                  Fine-tune agent execution thresholds, consensus checks, and grounding pipelines.
+                </p>
               </div>
             </div>
 
-            <div className="settings-form-grid" style={{ marginTop: 18 }}>
+            <div className="settings-form-grid" style={{ marginTop: 20 }}>
               <FormField
                 label="Minimum Confidence Threshold"
-                hint="Answers below this score are flagged as low confidence"
+                hint="Answers below this score are automatically flagged for review or dispute"
                 type="range"
                 min={20} max={90} step={5}
                 value={verForm.minConfidenceThreshold ?? 60}
@@ -150,7 +170,7 @@ export default function Settings() {
 
               <FormField
                 label="Number of Verification Agents"
-                hint="How many AI agents to use per verification"
+                hint="How many AI models execute parallel consensus checks per claim"
                 type="range"
                 min={1} max={4} step={1}
                 value={verForm.numVerificationAgents ?? 3}
@@ -160,23 +180,16 @@ export default function Settings() {
 
               <ToggleField
                 label="Additional Verification on Conflict"
-                hint="Run a second verification pass when agents disagree"
+                hint="Run an automated arbitration pass when agents disagree"
                 value={verForm.additionalVerificationOnConflict ?? true}
                 onChange={(v) => setVerForm(f => ({ ...f, additionalVerificationOnConflict: v }))}
               />
 
               <ToggleField
-                label="Source Verification Enabled"
-                hint="Include external sources in confidence scoring"
+                label="Real-Time Source Verification Enabled"
+                hint="Include live Google News RSS and Wikipedia REST data in scoring"
                 value={verForm.sourceVerificationEnabled ?? true}
                 onChange={(v) => setVerForm(f => ({ ...f, sourceVerificationEnabled: v }))}
-              />
-
-              <ToggleField
-                label="Demo Mode"
-                hint="Use simulated responses when API keys are not configured"
-                value={verForm.demoMode ?? false}
-                onChange={(v) => setVerForm(f => ({ ...f, demoMode: v }))}
               />
 
               <ToggleField
@@ -188,22 +201,28 @@ export default function Settings() {
             </div>
           </div>
 
-          {/* Scoring Weights */}
-          <div className="card" style={{ padding: 22 }}>
+          {/* Scoring Weights Section */}
+          <div className="card" style={{ padding: 24 }}>
             <div className="settings-section-header">
-              <div className="settings-section-icon"><Sliders size={16} color="#19C463" /></div>
+              <div className="settings-section-icon" style={{ background: '#F5F3FF' }}>
+                <Sliders size={18} color="#7C3AED" />
+              </div>
               <div>
-                <h3>Confidence Scoring Weights</h3>
-                <p style={{ fontSize: '0.8125rem', marginTop: 2 }}>Adjust how the confidence score is calculated. Total should equal 100.</p>
+                <h3 style={{ fontSize: '1.125rem', fontWeight: 750, color: 'var(--primary-navy)', margin: 0 }}>
+                  Confidence Scoring Weights
+                </h3>
+                <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', marginTop: 2 }}>
+                  Adjust how overall consensus confidence is calculated. Total should equal 100 points.
+                </p>
               </div>
             </div>
 
-            <div style={{ marginTop: 18, display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{ marginTop: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
               {[
-                { key: 'aiAgreementWeight', label: 'AI Agreement' },
-                { key: 'evidenceSupportWeight', label: 'Evidence Support' },
-                { key: 'sourceReliabilityWeight', label: 'Source Reliability' },
-                { key: 'consistencyWeight', label: 'Consistency' },
+                { key: 'aiAgreementWeight', label: 'Multi-Model AI Agreement' },
+                { key: 'evidenceSupportWeight', label: 'Live Evidence & Grounding Support' },
+                { key: 'sourceReliabilityWeight', label: 'Source Outlet Reliability Rating' },
+                { key: 'consistencyWeight', label: 'Factual Semantic Consistency' },
               ].map(({ key, label }) => (
                 <WeightField
                   key={key}
@@ -213,16 +232,16 @@ export default function Settings() {
                 />
               ))}
 
-              {/* Total */}
-              <div style={{ borderTop: '1px solid var(--border-light)', paddingTop: 14 }}>
+              {/* Total points check */}
+              <div style={{ borderTop: '1px solid var(--border)', paddingTop: 14, marginTop: 4 }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span style={{ fontWeight: 600, fontSize: '0.875rem' }}>Total</span>
+                  <span style={{ fontWeight: 650, fontSize: '0.875rem', color: 'var(--primary-navy)' }}>Total Calculated Weight</span>
                   <span style={{
-                    fontWeight: 700,
+                    fontWeight: 800,
                     fontSize: '0.9375rem',
                     color: Object.values(scoreForm).reduce((a, b) => a + Number(b), 0) === 100
-                      ? 'var(--green-dark)'
-                      : 'var(--error)',
+                      ? '#10B981'
+                      : '#EF4444',
                   }}>
                     {Object.values(scoreForm).reduce((a, b) => a + Number(b), 0)} / 100
                   </span>
@@ -231,103 +250,148 @@ export default function Settings() {
             </div>
           </div>
 
-          {/* Appearance */}
-          <div className="card" style={{ padding: 22 }}>
+          {/* Visual Design & Theme System */}
+          <div className="card" style={{ padding: 24 }}>
             <div className="settings-section-header">
-              <div className="settings-section-icon" style={{ background: 'var(--brand-light)' }}>
-                <Shield size={16} color="var(--brand-primary)" />
+              <div className="settings-section-icon" style={{ background: '#FFFBEB' }}>
+                <Sun size={18} color="#F59E0B" />
               </div>
               <div>
-                <h3>Appearance & Theme</h3>
-                <p style={{ fontSize: '0.8125rem', marginTop: 2 }}>
-                  Configure visual interface mode (Pure White light mode or Deep Obsidian dark mode).
+                <h3 style={{ fontSize: '1.125rem', fontWeight: 750, color: 'var(--text-primary)', margin: 0 }}>
+                  Visual Design & Theme System
+                </h3>
+                <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', marginTop: 2 }}>
+                  VerifyAI features an instant theme engine with complete white-to-black inversion and pure white typography.
                 </p>
               </div>
             </div>
-            <div style={{ marginTop: 16, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14 }}>
-              {/* Light Mode Card */}
+            <div style={{ marginTop: 18, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 14 }}>
+              {/* Pure White Light Card */}
               <div
-                onClick={() => applyTheme('light')}
+                onClick={() => setTheme('light')}
                 style={{
-                  padding: '16px 18px',
-                  border: `2px solid ${currentTheme === 'light' ? 'var(--brand-primary)' : 'var(--border)'}`,
-                  borderRadius: 12,
-                  background: currentTheme === 'light' ? 'var(--brand-light)' : 'var(--bg-card)',
+                  padding: '18px 20px',
+                  border: `2px solid ${theme === 'light' ? '#10B981' : 'var(--border)'}`,
+                  borderRadius: 'var(--radius-md)',
+                  background: theme === 'light' ? (theme === 'dark' ? '#0B1322' : '#F0FDF9') : 'var(--bg-card)',
                   cursor: 'pointer',
                   transition: 'all 0.2s ease',
+                  boxShadow: 'var(--shadow-sm)',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <Sun size={17} color={currentTheme === 'light' ? 'var(--brand-primary)' : 'var(--text-muted)'} />
-                    <span style={{ fontWeight: 650, fontSize: '0.9375rem', color: currentTheme === 'light' ? 'var(--brand-primary)' : 'var(--text-primary)' }}>
-                      Pure White Light
+                    <Sun size={18} color="#00A88A" />
+                    <span style={{ fontWeight: 750, fontSize: '0.9375rem', color: 'var(--text-primary)' }}>
+                      Bright White SaaS
                     </span>
                   </div>
-                  {currentTheme === 'light' && <CheckCircle size={17} color="var(--brand-primary)" />}
+                  {theme === 'light' && <CheckCircle size={18} color="#10B981" />}
                 </div>
-                <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0 }}>
-                  Crisp pure bright white canvas with electric indigo truth accents.
+                <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>
+                  Clean bright-white canvas with deep navy typography and vibrant multi-color accents.
                 </p>
               </div>
 
-              {/* Dark Mode Card */}
+              {/* Deep Obsidian Dark Card */}
               <div
-                onClick={() => applyTheme('dark')}
+                onClick={() => setTheme('dark')}
                 style={{
-                  padding: '16px 18px',
-                  border: `2px solid ${currentTheme === 'dark' ? 'var(--brand-primary)' : 'var(--border)'}`,
-                  borderRadius: 12,
-                  background: currentTheme === 'dark' ? 'var(--brand-light)' : 'var(--bg-card)',
+                  padding: '18px 20px',
+                  border: `2px solid ${theme === 'dark' ? '#06B6D4' : 'var(--border)'}`,
+                  borderRadius: 'var(--radius-md)',
+                  background: theme === 'dark' ? '#09101E' : 'var(--bg-card)',
                   cursor: 'pointer',
                   transition: 'all 0.2s ease',
+                  boxShadow: 'var(--shadow-sm)',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <Moon size={17} color={currentTheme === 'dark' ? 'var(--brand-primary)' : 'var(--text-muted)'} />
-                    <span style={{ fontWeight: 650, fontSize: '0.9375rem', color: currentTheme === 'dark' ? 'var(--brand-primary)' : 'var(--text-primary)' }}>
-                      Pitch Black Dark
+                    <Moon size={18} color="#22D3EE" />
+                    <span style={{ fontWeight: 750, fontSize: '0.9375rem', color: 'var(--text-primary)' }}>
+                      Deep Obsidian Dark
                     </span>
                   </div>
-                  {currentTheme === 'dark' && <CheckCircle size={17} color="var(--brand-primary)" />}
+                  {theme === 'dark' && <CheckCircle size={18} color="#06B6D4" />}
                 </div>
-                <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0 }}>
-                  Pitch obsidian black appearance with high-contrast luminous white text.
+                <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>
+                  Pure deep black canvas (#070D18) with crisp white text and radiant glowing neon accents.
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Save button */}
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+          {/* Notification Center & Audio Alerts */}
+          <div className="card" style={{ padding: 24 }}>
+            <div className="settings-section-header">
+              <div className="settings-section-icon" style={{ background: '#F0F9FF' }}>
+                <Bell size={18} color="#1687E8" />
+              </div>
+              <div style={{ flex: 1 }}>
+                <h3 style={{ fontSize: '1.125rem', fontWeight: 750, color: 'var(--text-primary)', margin: 0 }}>
+                  Notification Center & Live Alerts
+                </h3>
+                <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', marginTop: 2 }}>
+                  Receive instant toast and chime notifications ("This question is ready!") as soon as a claim or chat verification finishes.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={() => {
+                  addNotification({
+                    title: 'This question is ready!',
+                    message: 'Claim "Did NASA confirm water ice in permanently shadowed lunar craters?" is verified and ready.',
+                    question: 'Did NASA confirm water ice in permanently shadowed Moon craters?',
+                    status: 'verified',
+                    confidence: 94,
+                  });
+                }}
+                style={{ gap: 6 }}
+              >
+                <Sparkles size={14} color="#06B6D4" />
+                <span>Test Notification</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Action Row */}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 12, marginTop: 8 }}>
             {saved && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--green-dark)', fontSize: '0.875rem' }}>
-                <CheckCircle size={15} /> Settings saved
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#10B981', fontSize: '0.875rem', fontWeight: 650 }}>
+                <CheckCircle size={16} />
+                <span>Settings saved successfully</span>
               </div>
             )}
             <button type="button" className="btn btn-secondary" onClick={load}>
-              <RefreshCw size={14} /> Reset
+              <RefreshCw size={14} />
+              <span>Reset</span>
             </button>
             <button type="submit" className="btn btn-primary" disabled={saving}>
               {saving ? <RefreshCw size={14} className="animate-spin" /> : <Save size={14} />}
-              {saving ? 'Saving...' : 'Save Settings'}
+              <span>{saving ? 'Saving...' : 'Save Settings'}</span>
             </button>
           </div>
         </div>
       </form>
 
       <style>{`
+        .hero-text-gradient {
+          background: linear-gradient(135deg, #00A88A 0%, #06B6D4 50%, #1687E8 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          display: inline-block;
+        }
         .settings-section-header {
           display: flex;
           align-items: flex-start;
           gap: 12px;
         }
         .settings-section-icon {
-          width: 34px;
-          height: 34px;
-          background: var(--green-light);
-          border-radius: 9px;
+          width: 36px;
+          height: 36px;
+          border-radius: 10px;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -336,7 +400,7 @@ export default function Settings() {
         .settings-form-grid {
           display: flex;
           flex-direction: column;
-          gap: 16px;
+          gap: 18px;
         }
       `}</style>
     </div>
@@ -349,8 +413,7 @@ function ProviderRow({ provider, providerKey, onToggle, isLast }) {
   const [testResult, setTestResult] = useState(null);
 
   const isConfigured = provider.configured;
-  const StatusIcon = isConfigured ? CheckCircle : XCircle;
-  const statusColor = isConfigured ? '#16A34A' : '#9CA3AF';
+  const statusColor = isConfigured ? '#10B981' : '#8A9AB3';
 
   async function handleTest() {
     setTesting(true);
@@ -366,7 +429,7 @@ function ProviderRow({ provider, providerKey, onToggle, isLast }) {
   }
 
   const providerIcons = {
-    gemini: <Sparkles size={16} color="#6366F1" />,
+    gemini: <Sparkles size={16} color="#1687E8" />,
     groq: <Zap size={16} color="#F59E0B" />,
     huggingface: <span style={{ fontSize: '1rem' }}>🤗</span>,
     ollama: <span style={{ fontSize: '1rem' }}>🦙</span>,
@@ -375,38 +438,38 @@ function ProviderRow({ provider, providerKey, onToggle, isLast }) {
 
   return (
     <div style={{
-      display: 'flex', alignItems: 'center', gap: 14, padding: '16px 18px',
-      borderBottom: isLast ? 'none' : '1px solid var(--border-light)',
-      background: 'var(--bg-card)',
+      display: 'flex', alignItems: 'center', gap: 14, padding: '16px 20px',
+      borderBottom: isLast ? 'none' : '1px solid var(--border)',
+      background: '#FFFFFF',
     }}>
       {/* Icon */}
       <div style={{
         width: 36, height: 36, borderRadius: 10,
-        background: 'var(--bg-card-secondary, rgba(0,0,0,0.03))',
-        border: '1px solid var(--border-light)',
+        background: '#F8FAFC',
+        border: '1px solid var(--border)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         flexShrink: 0,
       }}>
-        {providerIcons[providerKey] || <Cpu size={16} color="var(--brand-primary)" />}
+        {providerIcons[providerKey] || <Cpu size={16} color="#1687E8" />}
       </div>
 
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-          <span style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)' }}>{provider.name}</span>
+          <span style={{ fontWeight: 650, fontSize: '0.9rem', color: 'var(--primary-navy)' }}>{provider.name}</span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <StatusIcon size={13} color={statusColor} />
-            <span style={{ fontSize: '0.75rem', fontWeight: 500, color: statusColor }}>
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: statusColor }} />
+            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: statusColor }}>
               {isConfigured ? 'Connected' : 'Not Connected'}
             </span>
           </div>
           {testResult && (
             <span style={{
               fontSize: '0.7rem',
-              fontWeight: 600,
+              fontWeight: 650,
               padding: '2px 8px',
               borderRadius: 6,
-              background: testResult.available || testResult.status === 'connected' ? 'rgba(22, 163, 74, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-              color: testResult.available || testResult.status === 'connected' ? '#16A34A' : '#EF4444',
+              background: testResult.available || testResult.status === 'connected' ? '#ECFDF5' : '#FFF1F2',
+              color: testResult.available || testResult.status === 'connected' ? '#059669' : '#EF4444',
             }}>
               {testResult.available || testResult.status === 'connected'
                 ? `✓ Ping OK ${testResult.activeModel ? `(${testResult.activeModel})` : (testResult.model ? `(${testResult.model.split('/').pop()})` : '')}`
@@ -419,7 +482,7 @@ function ProviderRow({ provider, providerKey, onToggle, isLast }) {
         {provider.url ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
             <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>URL:</span>
-            <span style={{ fontFamily: 'monospace', fontSize: '0.8125rem', color: 'var(--brand-primary)', background: 'var(--brand-light)', padding: '2px 6px', borderRadius: 4 }}>
+            <span style={{ fontFamily: 'monospace', fontSize: '0.8125rem', color: '#1687E8', background: '#F0F9FF', padding: '2px 6px', borderRadius: 4 }}>
               {provider.url}
             </span>
           </div>
@@ -454,11 +517,11 @@ function ProviderRow({ provider, providerKey, onToggle, isLast }) {
           type="button"
           onClick={handleTest}
           disabled={testing}
-          className="btn btn-secondary"
+          className="btn btn-secondary btn-sm"
           style={{ padding: '5px 10px', fontSize: '0.75rem', height: 30 }}
           title="Test real-time connection"
         >
-          {testing ? <RefreshCw size={12} className="animate-spin" /> : <Activity size={12} />}
+          {testing ? <RefreshCw size={12} className="animate-spin" /> : <Activity size={12} color="#1687E8" />}
           <span>{testing ? 'Testing...' : 'Test'}</span>
         </button>
       )}
@@ -482,8 +545,8 @@ function FormField({ label, hint, type, min, max, step, value, onChange, suffix 
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-        <label style={{ fontWeight: 500, fontSize: '0.875rem' }}>{label}</label>
-        <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--green-dark)' }}>
+        <label style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--primary-navy)' }}>{label}</label>
+        <span style={{ fontSize: '0.875rem', fontWeight: 700, color: '#10B981' }}>
           {value}{suffix}
         </span>
       </div>
@@ -493,7 +556,7 @@ function FormField({ label, hint, type, min, max, step, value, onChange, suffix 
         min={min} max={max} step={step}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        style={{ width: '100%', accentColor: '#19C463', cursor: 'pointer' }}
+        style={{ width: '100%', accentColor: '#10B981', cursor: 'pointer' }}
       />
     </div>
   );
@@ -503,7 +566,7 @@ function ToggleField({ label, hint, value, onChange }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
       <div>
-        <div style={{ fontWeight: 500, fontSize: '0.875rem', marginBottom: 2 }}>{label}</div>
+        <div style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--primary-navy)', marginBottom: 2 }}>{label}</div>
         {hint && <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 0 }}>{hint}</p>}
       </div>
       <label className="toggle" style={{ flexShrink: 0 }}>
@@ -518,21 +581,21 @@ function WeightField({ label, value, onChange }) {
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-        <label style={{ fontSize: '0.875rem', fontWeight: 450 }}>{label}</label>
-        <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--green-dark)', minWidth: 36, textAlign: 'right' }}>
+        <label style={{ fontSize: '0.875rem', fontWeight: 550, color: 'var(--primary-navy)' }}>{label}</label>
+        <span style={{ fontSize: '0.875rem', fontWeight: 700, color: '#10B981', minWidth: 44, textAlign: 'right' }}>
           {value} pts
         </span>
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <input
           type="range"
           min={0} max={60} step={5}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          style={{ flex: 1, accentColor: '#19C463', cursor: 'pointer' }}
+          style={{ flex: 1, accentColor: '#10B981', cursor: 'pointer' }}
         />
-        <div className="progress-bar" style={{ width: 80, flexShrink: 0 }}>
-          <div className="progress-fill" style={{ width: `${(value / 60) * 100}%`, background: '#19C463' }} />
+        <div className="progress-bar" style={{ width: 90, flexShrink: 0, height: 6, background: '#F1F5F9' }}>
+          <div className="progress-fill" style={{ width: `${(value / 60) * 100}%`, background: 'linear-gradient(90deg, #10B981, #06B6D4)' }} />
         </div>
       </div>
     </div>

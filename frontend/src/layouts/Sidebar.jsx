@@ -1,7 +1,7 @@
 import { NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, ShieldCheck, History, BarChart2,
-  Database, Settings, ChevronRight, X, Newspaper, Sparkles
+  Database, Settings, ChevronRight, X, Newspaper, Shield
 } from 'lucide-react';
 
 const MAIN_NAV_ITEMS = [
@@ -26,7 +26,7 @@ export default function Sidebar({ mobileOpen, onClose }) {
       {mobileOpen && (
         <div
           style={{
-            position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.4)',
+            position: 'fixed', inset: 0, background: 'rgba(7, 26, 61, 0.4)',
             backdropFilter: 'blur(4px)', zIndex: 49, display: 'none',
           }}
           className="mobile-overlay"
@@ -35,17 +35,16 @@ export default function Sidebar({ mobileOpen, onClose }) {
       )}
 
       <aside className={`sidebar ${mobileOpen ? 'sidebar--open' : ''}`}>
-        {/* Logo */}
+        {/* Top Brand Logo */}
         <div className="sidebar-logo">
           <div className="sidebar-logo-icon">
-            <ShieldCheck size={20} color="#FFFFFF" strokeWidth={2.4} />
+            <Shield size={20} color="#FFFFFF" strokeWidth={2.4} />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <div className="sidebar-logo-name">
-              Verify<span style={{ color: 'var(--brand-primary)' }}>AI</span>
+              Verify<span style={{ color: 'var(--primary-emerald)' }}>AI</span>
             </div>
             <div className="sidebar-logo-sub">
-              <Sparkles size={10} color="var(--brand-secondary)" style={{ display: 'inline', marginRight: 3 }} />
               Truth & Fact-Checking
             </div>
           </div>
@@ -56,7 +55,7 @@ export default function Sidebar({ mobileOpen, onClose }) {
 
         {/* Navigation */}
         <nav className="sidebar-nav">
-          <div className="sidebar-nav-label">Main Hub</div>
+          <div className="sidebar-nav-label">MAIN HUB</div>
           {MAIN_NAV_ITEMS.map(({ path, label, icon: Icon, exact }) => (
             <NavLink
               key={path}
@@ -67,13 +66,13 @@ export default function Sidebar({ mobileOpen, onClose }) {
               }
               onClick={onClose}
             >
-              <Icon size={18} className="sidebar-nav-icon" />
-              <span>{label}</span>
-              {location.pathname === path && <ChevronRight size={14} className="sidebar-nav-arrow" />}
+              <Icon size={18} className="sidebar-nav-icon" strokeWidth={2} />
+              <span className="sidebar-nav-text">{label}</span>
+              {location.pathname === path && <ChevronRight size={14} className="sidebar-nav-arrow" strokeWidth={2.5} />}
             </NavLink>
           ))}
 
-          <div className="sidebar-nav-label" style={{ marginTop: 14 }}>Intelligence & System</div>
+          <div className="sidebar-nav-label" style={{ marginTop: 20 }}>INTELLIGENCE & SYSTEM</div>
           {CONFIG_NAV_ITEMS.map(({ path, label, icon: Icon }) => (
             <NavLink
               key={path}
@@ -83,22 +82,42 @@ export default function Sidebar({ mobileOpen, onClose }) {
               }
               onClick={onClose}
             >
-              <Icon size={18} className="sidebar-nav-icon" />
-              <span>{label}</span>
-              {location.pathname === path && <ChevronRight size={14} className="sidebar-nav-arrow" />}
+              <Icon size={18} className="sidebar-nav-icon" strokeWidth={2} />
+              <span className="sidebar-nav-text">{label}</span>
+              {location.pathname === path && <ChevronRight size={14} className="sidebar-nav-arrow" strokeWidth={2.5} />}
             </NavLink>
           ))}
         </nav>
 
-        {/* Footer note with sonar ping */}
-        <div className="sidebar-footer">
-          <div className="sonar-emitter" style={{ marginRight: 4 }}>
-            <div className="sonar-ping-dot" />
-            <div className="sonar-ping-wave" />
+        {/* Engine Online Card (Exact match with reference screenshot) */}
+        <div className="sidebar-engine-card">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
+            <div className="sonar-emitter">
+              <div className="sonar-ping-dot" />
+              <div className="sonar-ping-wave" />
+            </div>
+            <span className="sidebar-engine-title">Engine Online</span>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <span style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.75rem' }}>Engine Online</span>
-            <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted)' }}>Multi-Source Real-Time</span>
+          <div className="sidebar-engine-sub">Multi-Agent Real-Time</div>
+
+          {/* Flowing animated multi-color wave line (Teal -> Cyan -> Blue -> Purple) */}
+          <div className="sidebar-wave-container">
+            <svg viewBox="0 0 160 28" width="100%" height="28" fill="none" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="waveGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#10B981" />
+                  <stop offset="35%" stopColor="#06B6D4" />
+                  <stop offset="70%" stopColor="#1687E8" />
+                  <stop offset="100%" stopColor="#8B5CF6" />
+                </linearGradient>
+              </defs>
+              <path
+                d="M0 16 C 25 6, 45 24, 75 14 C 105 4, 130 22, 160 12"
+                stroke="url(#waveGradient)"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+              />
+            </svg>
           </div>
         </div>
       </aside>
@@ -115,46 +134,42 @@ export default function Sidebar({ mobileOpen, onClose }) {
           display: flex;
           flex-direction: column;
           z-index: 50;
-          box-shadow: 1px 0 3px rgba(15, 23, 42, 0.02);
-          transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.25s ease;
+          transition: background-color 0.25s ease, border-color 0.25s ease, transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .sidebar-logo {
           display: flex;
           align-items: center;
           gap: 12px;
-          padding: 20px 18px 18px;
-          border-bottom: 1px solid var(--border-light);
+          padding: 22px 20px 18px;
         }
 
         .sidebar-logo-icon {
           width: 38px;
           height: 38px;
-          background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-secondary) 100%);
+          background: var(--gradient-primary);
           border-radius: 11px;
           display: flex;
           align-items: center;
           justify-content: center;
           flex-shrink: 0;
-          box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+          box-shadow: 0 4px 14px rgba(6, 182, 212, 0.3);
         }
 
         .sidebar-logo-name {
           font-family: var(--font-display);
-          font-size: 1.0625rem;
+          font-size: 1.1875rem;
           font-weight: 800;
-          color: var(--text-primary);
+          color: var(--primary-navy);
           letter-spacing: -0.025em;
           line-height: 1.2;
         }
 
         .sidebar-logo-sub {
-          font-size: 0.6875rem;
-          font-weight: 550;
+          font-size: 0.75rem;
+          font-weight: 500;
           color: var(--text-muted);
           margin-top: 1px;
-          display: flex;
-          align-items: center;
         }
 
         .sidebar-close-btn {
@@ -166,11 +181,11 @@ export default function Sidebar({ mobileOpen, onClose }) {
           padding: 5px;
           border-radius: 6px;
         }
-        .sidebar-close-btn:hover { background: var(--bg-gray); color: var(--text-primary); }
+        .sidebar-close-btn:hover { background: var(--bg-secondary); color: var(--text-primary); }
 
         .sidebar-nav {
           flex: 1;
-          padding: 14px 12px;
+          padding: 18px 14px;
           overflow-y: auto;
         }
 
@@ -181,63 +196,75 @@ export default function Sidebar({ mobileOpen, onClose }) {
           color: var(--text-muted);
           text-transform: uppercase;
           letter-spacing: 0.08em;
-          padding: 6px 10px 4px;
+          padding: 6px 12px 6px;
         }
 
         .sidebar-nav-item {
           display: flex;
           align-items: center;
-          gap: 10px;
-          padding: 10px 12px;
-          border-radius: var(--radius-sm);
+          gap: 12px;
+          padding: 10px 14px;
+          border-radius: 10px;
           color: var(--text-secondary);
           font-size: 0.875rem;
-          font-weight: 500;
-          transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+          font-weight: 550;
+          transition: all 0.2s ease;
           position: relative;
-          margin-bottom: 3px;
+          margin-bottom: 4px;
+          text-decoration: none;
         }
 
         .sidebar-nav-item:hover {
-          background: var(--bg-gray);
-          color: var(--brand-primary);
-          transform: translateX(2px);
+          background: var(--bg-secondary);
+          color: var(--primary-blue);
         }
 
+        /* Active Navigation Item (Reference: Vibrant Teal to Blue Gradient) */
         .sidebar-nav-item--active {
-          background: var(--brand-light);
-          color: var(--brand-primary);
+          background: var(--gradient-primary) !important;
+          color: #FFFFFF !important;
           font-weight: 650;
+          box-shadow: 0 4px 14px rgba(6, 182, 212, 0.32);
         }
 
-        .sidebar-nav-item--active::before {
-          content: '';
-          position: absolute;
-          left: 0;
-          top: 6px;
-          bottom: 6px;
-          width: 3px;
-          background: var(--brand-primary);
-          border-radius: 0 4px 4px 0;
-        }
-
-        .sidebar-nav-item--active .sidebar-nav-icon {
-          color: var(--brand-primary);
+        .sidebar-nav-item--active .sidebar-nav-icon,
+        .sidebar-nav-item--active .sidebar-nav-text,
+        .sidebar-nav-item--active .sidebar-nav-arrow {
+          color: #FFFFFF !important;
         }
 
         .sidebar-nav-arrow {
           margin-left: auto;
-          color: var(--brand-secondary);
-          opacity: 0.8;
         }
 
-        .sidebar-footer {
-          padding: 16px 18px;
-          border-top: 1px solid var(--border-light);
-          display: flex;
-          align-items: center;
-          gap: 10px;
+        /* Bottom Engine Online Card */
+        .sidebar-engine-card {
+          margin: 16px 14px 20px;
+          padding: 14px 16px 12px;
           background: var(--bg-card);
+          border: 1px solid var(--border);
+          border-radius: 14px;
+          box-shadow: var(--shadow-sm);
+        }
+
+        .sidebar-engine-title {
+          font-family: var(--font-display);
+          font-weight: 700;
+          color: var(--primary-navy);
+          font-size: 0.8125rem;
+        }
+
+        .sidebar-engine-sub {
+          font-size: 0.6875rem;
+          color: var(--text-muted);
+          margin-bottom: 8px;
+          padding-left: 16px;
+        }
+
+        .sidebar-wave-container {
+          margin-top: 4px;
+          height: 28px;
+          overflow: hidden;
         }
 
         @media (max-width: 768px) {

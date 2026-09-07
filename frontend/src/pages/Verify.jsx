@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   ShieldCheck, CheckCircle2, Circle, Loader,
@@ -8,6 +8,7 @@ import {
   Newspaper, BookOpen, Quote, Radio, CheckCircle
 } from 'lucide-react';
 import { useVerification } from '../hooks/useVerification';
+import { useNotifications } from '../context/NotificationContext';
 import ConfidenceScore from '../components/ui/ConfidenceScore';
 import StatusBadge from '../components/ui/StatusBadge';
 
@@ -68,8 +69,30 @@ export default function Verify() {
   const [evidenceOpen, setEvidenceOpen] = useState(true);
   const [copied, setCopied] = useState(false);
   const { verify, reset, result, loading, error, steps, activeStepIndex } = useVerification();
+  const { addNotification } = useNotifications();
+  const lastNotifiedKeyRef = useRef(null);
 
-  // Handle incoming question from Live News page
+  // Trigger notification when verification finishes: "This question is ready!"
+  useEffect(() => {
+    if (result && !loading) {
+      const qText = result.question || question || 'Submitted question';
+      const key = `${result._id || result.id || 'res'}-${qText}`;
+      if (lastNotifiedKeyRef.current !== key) {
+        lastNotifiedKeyRef.current = key;
+        const shortQ = qText.length > 55 ? qText.slice(0, 52) + '...' : qText;
+        const conf = result.confidenceScore || result.confidence || 88;
+        addNotification({
+          title: 'This question is ready!',
+          message: `Claim "${shortQ}" verification complete (${result.status || 'verified'}).`,
+          question: qText,
+          status: result.status || 'verified',
+          confidence: conf,
+        });
+      }
+    }
+  }, [result, loading, addNotification, question]);
+
+  // Handle incoming question from Live News page or Dashboard
   useEffect(() => {
     if (location.state?.initialQuestion) {
       const initQ = location.state.initialQuestion;
@@ -107,15 +130,17 @@ export default function Verify() {
   return (
     <div className="page-content fade-in">
       {/* Page Header */}
-      <div className="page-header">
+      <div className="page-header" style={{ marginBottom: 24 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
           <div>
             <div className="verify-badge">
-              <Sparkles size={13} color="var(--brand-secondary)" />
+              <Sparkles size={13} color="#00A88A" />
               <span>Multi-Agent Consensus & Real-Time Grounding</span>
             </div>
-            <h1>Verify an AI Answer & News Claim</h1>
-            <p>
+            <h1 style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--primary-navy)', letterSpacing: '-0.03em', marginBottom: 6 }}>
+              Verify an AI Answer & <span className="hero-text-gradient">News Claim</span>
+            </h1>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9375rem', maxWidth: 720 }}>
               Submit any factual question, news claim, or statement for cross-model verification against Google News RSS and Wikipedia Open REST API.
             </p>
           </div>
@@ -124,18 +149,15 @@ export default function Verify() {
             onClick={() => navigate('/news')}
             style={{ display: 'flex', alignItems: 'center', gap: 7 }}
           >
-            <Newspaper size={15} color="var(--brand-primary)" />
+            <Newspaper size={15} color="#1687E8" />
             <span>Browse Live News</span>
           </button>
         </div>
       </div>
 
-      {/* Input Area Card with Futuristic Scanner Effect */}
+      {/* Input Area Card */}
       {!result && (
-        <div className={`card verify-input-card scanner-container fade-in-up ${loading ? 'is-scanning' : ''}`}>
-          {/* Laser Scanner Beam (Active during typing or loading) */}
-          {(loading || question.length > 0) && <div className="scanner-beam" />}
-
+        <div className={`card verify-input-card fade-in-up ${loading ? 'is-scanning' : ''}`}>
           {/* Live Sonar Connection Pill */}
           <div className="grounding-indicator">
             <div className="sonar-emitter">
@@ -143,11 +165,11 @@ export default function Verify() {
               <div className="sonar-ping-wave" />
             </div>
             <span>
-              Connected: <strong>Google News Live RSS + Wikipedia Open REST API + Multi-Model AI</strong>
+              Connected: <strong style={{ color: '#071A3D' }}>Google News Live RSS + Wikipedia Open REST API + Multi-Model AI</strong>
             </span>
           </div>
 
-          <form onSubmit={handleSubmit} style={{ marginTop: 16 }}>
+          <form onSubmit={handleSubmit} style={{ marginTop: 18 }}>
             <textarea
               className="verify-textarea"
               placeholder="Ask any question, paste a news headline, or test a claim (e.g., 'Did NASA confirm water ice on the Moon?' or 'Who invented the telephone?')..."
@@ -191,7 +213,7 @@ export default function Verify() {
                   {QUESTION_CATEGORIES.map(({ category }) => (
                     <button
                       key={category}
-                      className={`quick-picks-tab ${selectedCategory === category ? 'quick-picks-tab--active' : ''}`}
+                      className={`filter-chip ${selectedCategory === category ? 'filter-chip--active' : ''}`}
                       onClick={() => setSelectedCategory(category)}
                     >
                       {category}
@@ -226,18 +248,18 @@ export default function Verify() {
           <div className="progress-header">
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <div className="progress-spin-ring">
-                <Loader size={20} className="animate-spin" color="var(--brand-primary)" />
+                <Loader size={20} className="animate-spin" color="#00A88A" />
               </div>
               <div>
-                <span style={{ fontWeight: 700, fontSize: '0.975rem', color: 'var(--text-primary)' }}>
+                <span style={{ fontWeight: 750, fontSize: '1rem', color: 'var(--primary-navy)' }}>
                   Executing Multi-Source Verification Pipeline...
                 </span>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 2 }}>
+                <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', marginTop: 2 }}>
                   Parallel AI analysis & factual grounding in progress
                 </div>
               </div>
             </div>
-            <span className="badge badge-indigo">Active Trace</span>
+            <span className="badge badge-blue">Active Trace</span>
           </div>
 
           <div className="pipeline-steps-list">
@@ -252,10 +274,10 @@ export default function Verify() {
                 >
                   <div className="step-icon-col">
                     {isDone ? (
-                      <CheckCircle2 size={18} color="var(--emerald-primary)" />
+                      <CheckCircle2 size={18} color="#10B981" />
                     ) : isCurrent ? (
                       <div className="current-step-pulse">
-                        <Loader size={16} className="animate-spin" color="var(--brand-primary)" />
+                        <Loader size={16} className="animate-spin" color="#1687E8" />
                       </div>
                     ) : (
                       <Circle size={16} color="#CBD5E1" />
@@ -274,11 +296,11 @@ export default function Verify() {
 
       {/* Error State */}
       {error && !loading && (
-        <div className="card" style={{ padding: 24, background: 'var(--error-light)', border: '1px solid var(--error-border)', marginBottom: 24 }}>
+        <div className="card" style={{ padding: 24, background: '#FFF1F2', border: '1px solid #FECDD3', marginBottom: 24 }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
-            <AlertCircle size={22} color="var(--error)" style={{ flexShrink: 0, marginTop: 2 }} />
+            <AlertCircle size={22} color="#EF4444" style={{ flexShrink: 0, marginTop: 2 }} />
             <div style={{ flex: 1 }}>
-              <p style={{ color: 'var(--error)', fontWeight: 700, marginBottom: 4 }}>
+              <p style={{ color: '#EF4444', fontWeight: 700, marginBottom: 4 }}>
                 Verification Pipeline Error
               </p>
               <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: 14 }}>
@@ -299,7 +321,7 @@ export default function Verify() {
           {/* Demo simulation badge */}
           {result.demoMode && (
             <div className="demo-banner">
-              <Sparkles size={16} color="var(--brand-primary)" />
+              <Sparkles size={16} color="#10B981" />
               <span>
                 <strong>Grounding Active:</strong> Live Wikipedia & Google News verified. AI multi-agent consensus evaluated.
               </span>
@@ -310,12 +332,12 @@ export default function Verify() {
           <div className="answer-card card">
             <div className="answer-card-header">
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <StatusBadge status={result.status} size="md" />
+                <StatusBadge status={result.status} size="md" variant="dot" />
                 <span className="badge badge-gray" style={{ textTransform: 'capitalize' }}>
                   {result.classification || 'General Fact'}
                 </span>
                 {result.viaN8n && (
-                  <span className="badge" style={{ background: '#EA4B7120', color: '#EA4B71', border: '1px solid #EA4B7140', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                  <span className="badge" style={{ background: '#FFF0F5', color: '#E11D48', borderColor: '#FECDD3', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                     🔄 n8n Orchestrated
                   </span>
                 )}
@@ -326,7 +348,7 @@ export default function Verify() {
                   onClick={handleCopy}
                   style={{ gap: 6 }}
                 >
-                  {copied ? <Check size={14} color="var(--emerald-primary)" /> : <Copy size={14} />}
+                  {copied ? <Check size={14} color="#10B981" /> : <Copy size={14} />}
                   <span>{copied ? 'Copied' : 'Copy Answer'}</span>
                 </button>
                 <button className="btn btn-primary btn-sm" onClick={handleNewQuestion} style={{ gap: 6 }}>
@@ -349,7 +371,7 @@ export default function Verify() {
             {/* Verified Answer Body */}
             <div className="answer-body">
               <div className="answer-body-label">
-                <CheckCircle2 size={14} color="var(--emerald-primary)" />
+                <CheckCircle2 size={14} color="#10B981" />
                 <span>Single Verified Consensus</span>
               </div>
               <p className="answer-body-text">
@@ -368,7 +390,7 @@ export default function Verify() {
                   level={result.confidenceLevel}
                   size="md"
                   variant="radial"
-                  showBar
+                  showLabel
                 />
               </div>
 
@@ -402,11 +424,11 @@ export default function Verify() {
                     return (
                       <div key={i} className={`answer-source-chip ${isWiki ? 'chip--wiki' : isGoogle ? 'chip--google' : ''}`}>
                         {isWiki ? (
-                          <BookOpen size={13} color="#059669" />
+                          <BookOpen size={13} color="#10B981" />
                         ) : isGoogle ? (
-                          <Newspaper size={13} color="#4F46E5" />
+                          <Newspaper size={13} color="#1687E8" />
                         ) : (
-                          <Globe size={13} color="var(--brand-primary)" />
+                          <Globe size={13} color="#00A88A" />
                         )}
                         <span>{srcName}</span>
                       </div>
@@ -426,9 +448,9 @@ export default function Verify() {
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <div className="evidence-icon-badge">
-                    <Quote size={16} color="var(--brand-primary)" />
+                    <Quote size={16} color="#1687E8" />
                   </div>
-                  <span style={{ fontWeight: 700, fontSize: '0.9375rem', color: 'var(--text-primary)' }}>
+                  <span style={{ fontWeight: 750, fontSize: '0.9375rem', color: 'var(--primary-navy)' }}>
                     Verified Evidence Quotes & Live Reference Extracts ({result.evidenceSnippets.length})
                   </span>
                 </div>
@@ -481,8 +503,10 @@ export default function Verify() {
               onClick={() => setDetailsOpen(!detailsOpen)}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <HelpCircle size={17} color="var(--brand-primary)" />
-                <span style={{ fontWeight: 650, fontSize: '0.875rem' }}>View Multi-Agent Verification Trace</span>
+                <HelpCircle size={17} color="#1687E8" />
+                <span style={{ fontWeight: 700, fontSize: '0.875rem', color: 'var(--primary-navy)' }}>
+                  View Multi-Agent Verification Trace
+                </span>
               </div>
               {detailsOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
             </button>
@@ -498,7 +522,7 @@ export default function Verify() {
                         <div key={i} className="details-step">
                           <div className={`details-step-dot ${step.status === 'conflict' ? 'warn' : 'done'}`} />
                           <div>
-                            <div style={{ fontWeight: 650, fontSize: '0.8125rem', color: 'var(--text-primary)' }}>
+                            <div style={{ fontWeight: 650, fontSize: '0.8125rem', color: 'var(--primary-navy)' }}>
                               {step.label}
                             </div>
                             <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 2 }}>
@@ -534,7 +558,7 @@ export default function Verify() {
                                 <span style={{ marginRight: 6 }}>{icon}</span>
                                 {v.provider}
                               </span>
-                              <span className={`badge ${v.agreement ? 'badge-green' : 'badge-yellow'}`}>
+                              <span className={`badge ${v.agreement ? 'badge-green' : 'badge-orange'}`}>
                                 {v.agreement ? 'Agreed' : 'Disputed'}
                               </span>
                             </div>
@@ -542,7 +566,7 @@ export default function Verify() {
                             <div className="details-agent-meta">
                               <span>Confidence: {Math.round((v.confidence || 0) * 100)}%</span>
                               {v.role && <span style={{ marginLeft: 6, color: 'var(--text-muted)' }}>• {v.role}</span>}
-                              {v.model && <span style={{ marginLeft: 6, color: 'var(--brand-primary)', fontFamily: 'monospace', fontSize: '0.75rem' }}>[{v.model}]</span>}
+                              {v.model && <span style={{ marginLeft: 6, color: '#1687E8', fontFamily: 'monospace', fontSize: '0.75rem' }}>[{v.model}]</span>}
                             </div>
                           </div>
                         );
@@ -562,19 +586,26 @@ export default function Verify() {
           align-items: center;
           gap: 6px;
           padding: 4px 10px;
-          background: var(--brand-light);
-          border: 1px solid rgba(99, 102, 241, 0.2);
+          background: #ECFDF5;
+          border: 1px solid #A7F3D0;
           border-radius: 999px;
           font-size: 0.75rem;
           font-weight: 600;
-          color: var(--brand-primary);
+          color: #059669;
           margin-bottom: 10px;
+        }
+
+        .hero-text-gradient {
+          background: linear-gradient(135deg, #00A88A 0%, #06B6D4 50%, #1687E8 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          display: inline-block;
         }
 
         .verify-input-card {
           padding: 28px;
           margin-bottom: 28px;
-          background: var(--bg-card);
+          background: #FFFFFF;
           border: 1px solid var(--border);
           border-radius: var(--radius-lg);
           box-shadow: var(--shadow-sm);
@@ -582,8 +613,8 @@ export default function Verify() {
         }
 
         .verify-input-card.is-scanning {
-          border-color: rgba(99, 102, 241, 0.4);
-          box-shadow: 0 0 20px -4px rgba(99, 102, 241, 0.15);
+          border-color: #06B6D4;
+          box-shadow: 0 0 20px -4px rgba(6, 182, 212, 0.2);
         }
 
         .grounding-indicator {
@@ -591,11 +622,11 @@ export default function Verify() {
           align-items: center;
           gap: 10px;
           padding: 10px 14px;
-          background: var(--emerald-light);
+          background: #ECFDF5;
           border-radius: var(--radius-sm);
           font-size: 0.8125rem;
-          color: var(--emerald-dark);
-          border: 1px solid var(--emerald-border);
+          color: #065F46;
+          border: 1px solid #A7F3D0;
         }
 
         .verify-textarea {
@@ -605,8 +636,8 @@ export default function Verify() {
           padding: 16px 18px;
           font-size: 0.975rem;
           font-family: inherit;
-          color: var(--text-primary);
-          background: var(--bg-card);
+          color: var(--primary-navy);
+          background: #FFFFFF;
           resize: vertical;
           outline: none;
           transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
@@ -614,8 +645,8 @@ export default function Verify() {
         }
 
         .verify-textarea:focus {
-          border-color: var(--brand-secondary);
-          box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+          border-color: #06B6D4;
+          box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.15);
         }
 
         .verify-input-footer {
@@ -658,33 +689,6 @@ export default function Verify() {
           padding-bottom: 6px;
         }
 
-        .quick-picks-tab {
-          padding: 6px 14px;
-          background: var(--bg-card);
-          border: 1px solid var(--border);
-          border-radius: 999px;
-          font-size: 0.775rem;
-          font-weight: 550;
-          color: var(--text-secondary);
-          cursor: pointer;
-          white-space: nowrap;
-          transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        .quick-picks-tab:hover {
-          background: var(--bg-gray);
-          color: var(--text-primary);
-          border-color: var(--border-hover);
-        }
-
-        .quick-picks-tab--active {
-          background: var(--brand-light);
-          color: var(--brand-primary);
-          border-color: rgba(99, 102, 241, 0.35);
-          font-weight: 650;
-          box-shadow: 0 1px 4px rgba(99, 102, 241, 0.12);
-        }
-
         .quick-picks-grid {
           display: grid;
           grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -708,11 +712,11 @@ export default function Verify() {
         }
 
         .quick-pick-btn:hover {
-          background: var(--bg-gray);
-          border-color: rgba(99, 102, 241, 0.35);
-          color: var(--brand-primary);
+          background: var(--bg-secondary);
+          border-color: var(--border-hover);
+          color: var(--text-primary);
           transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
+          box-shadow: 0 4px 12px rgba(7, 26, 61, 0.06);
         }
 
         .quick-pick-arrow {
@@ -722,7 +726,7 @@ export default function Verify() {
         }
 
         .quick-pick-btn:hover .quick-pick-arrow {
-          color: var(--brand-primary);
+          color: #1687E8;
           transform: translateX(4px);
         }
 
@@ -731,8 +735,8 @@ export default function Verify() {
           margin-bottom: 28px;
           background: var(--bg-card);
           border: 1px solid var(--border);
-          border-left: 4px solid var(--brand-primary);
-          box-shadow: var(--shadow-md);
+          border-left: 4px solid #10B981;
+          box-shadow: var(--shadow-sm);
         }
 
         .progress-header {
@@ -745,7 +749,7 @@ export default function Verify() {
         .progress-spin-ring {
           width: 36px;
           height: 36px;
-          background: var(--brand-light);
+          background: #ECFDF5;
           border-radius: 50%;
           display: flex;
           align-items: center;
@@ -775,13 +779,13 @@ export default function Verify() {
         }
 
         .pipeline-step-item--current .step-label {
-          color: var(--brand-primary);
+          color: #1687E8;
           font-weight: 700;
         }
 
         .step-label {
           font-size: 0.875rem;
-          color: var(--text-primary);
+          color: var(--primary-navy);
           font-weight: 600;
         }
 
@@ -795,12 +799,12 @@ export default function Verify() {
           display: flex;
           align-items: center;
           gap: 10px;
-          background: var(--brand-light);
-          border: 1px solid rgba(99, 102, 241, 0.25);
+          background: #ECFDF5;
+          border: 1px solid #A7F3D0;
           border-radius: var(--radius-sm);
           padding: 12px 16px;
           font-size: 0.845rem;
-          color: var(--brand-hover);
+          color: #065F46;
         }
 
         .answer-card {
@@ -834,7 +838,7 @@ export default function Verify() {
         .answer-question-title {
           font-size: 1.35rem;
           font-weight: 750;
-          color: var(--text-primary);
+          color: var(--primary-navy);
           margin-top: 6px;
           line-height: 1.35;
         }
@@ -849,14 +853,14 @@ export default function Verify() {
           gap: 6px;
           font-size: 0.75rem;
           font-weight: 700;
-          color: var(--emerald-dark);
+          color: #059669;
           text-transform: uppercase;
           letter-spacing: 0.06em;
           margin-bottom: 10px;
         }
 
         .answer-body-text {
-          color: var(--text-primary);
+          color: var(--primary-navy);
           line-height: 1.8;
           font-size: 1.025rem;
           white-space: pre-line;
@@ -906,22 +910,22 @@ export default function Verify() {
         }
 
         .chip--wiki {
-          background: var(--emerald-light);
-          border-color: var(--emerald-border);
-          color: var(--emerald-dark);
+          background: #ECFDF5;
+          border-color: #A7F3D0;
+          color: #059669;
         }
 
         .chip--google {
-          background: var(--brand-light);
-          border-color: rgba(99, 102, 241, 0.35);
-          color: var(--brand-primary);
+          background: #F0F9FF;
+          border-color: #BAE6FD;
+          color: #0284C7;
         }
 
         .evidence-card {
           padding: 22px 26px;
           background: var(--bg-card);
           border: 1px solid var(--border);
-          border-left: 4px solid var(--brand-primary);
+          border-left: 4px solid #1687E8;
         }
 
         .evidence-card-header {
@@ -935,7 +939,7 @@ export default function Verify() {
           width: 32px;
           height: 32px;
           border-radius: 8px;
-          background: var(--brand-light);
+          background: #F0F9FF;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -950,7 +954,7 @@ export default function Verify() {
 
         .evidence-item {
           padding: 16px 18px;
-          background: var(--bg-gray);
+          background: var(--bg-secondary);
           border: 1px solid var(--border);
           border-radius: var(--radius-md);
         }
@@ -972,13 +976,13 @@ export default function Verify() {
         }
 
         .badge--wiki {
-          background: var(--emerald-light);
-          color: var(--emerald-dark);
+          background: #ECFDF5;
+          color: #059669;
         }
 
         .badge--news {
-          background: var(--brand-light);
-          color: var(--brand-primary);
+          background: #F0F9FF;
+          color: #0284C7;
         }
 
         .evidence-source {
@@ -998,7 +1002,7 @@ export default function Verify() {
           align-items: center;
           gap: 4px;
           font-size: 0.75rem;
-          color: var(--brand-primary);
+          color: #1687E8;
           text-decoration: none;
           font-weight: 600;
         }
@@ -1008,7 +1012,7 @@ export default function Verify() {
         .evidence-title {
           font-size: 0.875rem;
           font-weight: 650;
-          color: var(--text-primary);
+          color: var(--primary-navy);
           margin-bottom: 6px;
         }
 
@@ -1064,7 +1068,7 @@ export default function Verify() {
         }
 
         .details-step-dot.done {
-          background: var(--emerald-primary);
+          background: #10B981;
         }
 
         .details-step-dot.warn {
@@ -1079,8 +1083,8 @@ export default function Verify() {
 
         .details-agent-card {
           padding: 16px;
-          background: #F8FAFC;
-          border: 1px solid var(--border-light);
+          background: var(--bg-secondary);
+          border: 1px solid var(--border);
           border-radius: var(--radius-sm);
         }
 
@@ -1094,7 +1098,7 @@ export default function Verify() {
         .details-agent-name {
           font-weight: 700;
           font-size: 0.8125rem;
-          color: var(--text-primary);
+          color: var(--primary-navy);
         }
 
         .details-agent-reason {
@@ -1112,7 +1116,7 @@ export default function Verify() {
 
         .divider {
           height: 1px;
-          background: var(--border-light);
+          background: var(--border);
           margin: 20px 0;
         }
 
@@ -1133,13 +1137,13 @@ function CheckItem({ ok, label, warn }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: '0.845rem' }}>
       {ok ? (
-        <CheckCircle2 size={16} color="var(--emerald-primary)" style={{ flexShrink: 0 }} />
+        <CheckCircle2 size={16} color="#10B981" style={{ flexShrink: 0 }} />
       ) : warn ? (
         <AlertTriangle size={16} color="#F59E0B" style={{ flexShrink: 0 }} />
       ) : (
         <Circle size={16} color="#CBD5E1" style={{ flexShrink: 0 }} />
       )}
-      <span style={{ color: ok ? 'var(--text-primary)' : 'var(--text-secondary)', fontWeight: ok ? 550 : 450 }}>
+      <span style={{ color: ok ? 'var(--primary-navy)' : 'var(--text-secondary)', fontWeight: ok ? 600 : 450 }}>
         {label}
       </span>
     </div>

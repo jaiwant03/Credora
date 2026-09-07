@@ -160,26 +160,28 @@ ${sources || 'No external sources cited.'}
         </button>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <button className="btn btn-secondary btn-sm" onClick={() => setIsExportOpen(true)}>
-            <Share2 size={13} /> Export Report
+            <Share2 size={13} color="#1687E8" />
+            <span>Export Report</span>
           </button>
           <button className="btn btn-danger btn-sm" onClick={() => setIsDeleteOpen(true)}>
-            <Trash2 size={13} /> Delete
+            <Trash2 size={13} />
+            <span>Delete</span>
           </button>
         </div>
       </div>
 
       {/* Header Card */}
-      <div className="card detail-header-card" style={{ padding: 24, marginBottom: 20 }}>
+      <div className="card detail-header-card" style={{ padding: 26, marginBottom: 20 }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
           <div style={{ flex: 1, minWidth: 260 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
-              <StatusBadge status={data.status} size="md" />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
+              <StatusBadge status={data.status} size="md" variant="dot" />
               <span className="badge badge-gray" style={{ fontSize: '0.75rem' }}>
                 {formatClassification(data.classification)}
               </span>
-              {data.demoMode && <span className="badge badge-demo" style={{ fontSize: '0.75rem' }}>Demo Simulation</span>}
+              {data.demoMode && <span className="badge badge-blue" style={{ fontSize: '0.75rem' }}>Demo Simulation</span>}
             </div>
-            <h1 style={{ fontSize: '1.375rem', fontWeight: 650, color: 'var(--text-primary)', marginBottom: 8, lineHeight: 1.4 }}>
+            <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--primary-navy)', marginBottom: 8, lineHeight: 1.35, letterSpacing: '-0.02em' }}>
               {data.question}
             </h1>
             <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
@@ -187,7 +189,13 @@ ${sources || 'No external sources cited.'}
             </p>
           </div>
           <div style={{ flexShrink: 0 }}>
-            <ConfidenceScore score={data.confidenceScore ?? data.confidence} level={data.confidenceLevel} size="md" showBar />
+            <ConfidenceScore
+              score={data.confidenceScore ?? data.confidence}
+              level={data.confidenceLevel}
+              size="md"
+              variant="radial"
+              showLabel
+            />
           </div>
         </div>
       </div>
@@ -197,24 +205,24 @@ ${sources || 'No external sources cited.'}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           
           {/* Final Verified Answer */}
-          <div className="card" style={{ padding: 22, borderLeft: '4px solid var(--green-primary)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+          <div className="card" style={{ padding: 24, borderLeft: '4px solid #10B981' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <div style={{ width: 28, height: 28, background: 'var(--green-light)', borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <ShieldCheck size={16} color="var(--green-dark)" />
+                <div style={{ width: 28, height: 28, background: '#ECFDF5', borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <ShieldCheck size={16} color="#10B981" />
                 </div>
-                <h3 style={{ fontSize: '1rem', fontWeight: 650 }}>Final Verified Answer</h3>
+                <h3 style={{ fontSize: '1rem', fontWeight: 750, color: 'var(--primary-navy)', margin: 0 }}>Final Verified Consensus</h3>
               </div>
               <button
                 className="btn btn-secondary btn-sm"
                 onClick={handleCopyAnswer}
                 style={{ gap: 6, fontSize: '0.75rem', padding: '5px 10px' }}
               >
-                {copiedAnswer ? <Check size={13} color="var(--green-dark)" /> : <Copy size={13} />}
-                {copiedAnswer ? 'Copied!' : 'Copy Answer'}
+                {copiedAnswer ? <Check size={13} color="#10B981" /> : <Copy size={13} />}
+                <span>{copiedAnswer ? 'Copied!' : 'Copy Answer'}</span>
               </button>
             </div>
-            <p style={{ fontSize: '0.9375rem', color: 'var(--text-primary)', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>
+            <p style={{ fontSize: '0.975rem', color: 'var(--primary-navy)', lineHeight: 1.75, whiteSpace: 'pre-wrap' }}>
               {data.finalAnswer || data.answer}
             </p>
           </div>
@@ -236,20 +244,20 @@ ${sources || 'No external sources cited.'}
             timestamp="Step 2"
           >
             {verifiers.length > 0 ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 8 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 10 }}>
                 {verifiers.map((v, i) => (
                   <div key={i} style={{
                     display: 'flex', alignItems: 'flex-start', gap: 12,
-                    padding: '12px 14px', background: 'var(--bg-gray)', borderRadius: 10,
+                    padding: '12px 16px', background: '#F8FAFC', borderRadius: 10,
                     border: '1px solid var(--border)'
                   }}>
                     <div style={{
-                      width: 10, height: 10, borderRadius: '50%', marginTop: 5, flexShrink: 0,
-                      background: v.agreement ? 'var(--green-primary)' : 'var(--warning)',
+                      width: 9, height: 9, borderRadius: '50%', marginTop: 5, flexShrink: 0,
+                      background: v.agreement ? '#10B981' : '#F59E0B',
                     }} />
                     <div style={{ flex: 1 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                        <span style={{ fontWeight: 600, fontSize: '0.875rem' }}>
+                        <span style={{ fontWeight: 700, fontSize: '0.875rem', color: 'var(--primary-navy)' }}>
                           <span style={{ marginRight: 6 }}>
                             {v.provider?.toLowerCase().includes('hugging')
                               ? '🤗'
@@ -275,12 +283,12 @@ ${sources || 'No external sources cited.'}
                         </p>
                       )}
                       {v.disputedClaim && (
-                        <p style={{ fontSize: '0.75rem', color: 'var(--orange)', marginTop: 4, fontWeight: 500 }}>
+                        <p style={{ fontSize: '0.75rem', color: '#EF4444', marginTop: 4, fontWeight: 500 }}>
                           Disputed Claim: "{v.disputedClaim}"
                         </p>
                       )}
                     </div>
-                    <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
+                    <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--primary-navy)', whiteSpace: 'nowrap' }}>
                       {v.confidence ? `${Math.round(v.confidence * 100)}%` : '—'}
                     </span>
                   </div>
@@ -293,10 +301,10 @@ ${sources || 'No external sources cited.'}
 
           {/* Sources Section */}
           {data.sources && data.sources.length > 0 && (
-            <div className="card" style={{ padding: 20 }}>
+            <div className="card" style={{ padding: 22 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                <Globe size={16} color="var(--green-primary)" />
-                <h3 style={{ fontSize: '0.9375rem', fontWeight: 600 }}>Consulted Sources & Citations</h3>
+                <Globe size={16} color="#00A88A" />
+                <h3 style={{ fontSize: '0.9375rem', fontWeight: 700, color: 'var(--primary-navy)', margin: 0 }}>Consulted Sources & Citations</h3>
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                 {data.sources.map((s, i) => (
@@ -313,8 +321,8 @@ ${sources || 'No external sources cited.'}
         {/* Right Sidebar: Meta & Technical Breakdown */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {/* Summary Box */}
-          <div className="card" style={{ padding: 20 }}>
-            <h3 style={{ fontSize: '0.9375rem', fontWeight: 600, marginBottom: 14 }}>
+          <div className="card" style={{ padding: 22 }}>
+            <h3 style={{ fontSize: '0.9375rem', fontWeight: 750, color: 'var(--primary-navy)', marginBottom: 16 }}>
               Verification Summary
             </h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -343,14 +351,14 @@ ${sources || 'No external sources cited.'}
               onClick={() => setTechOpen(!techOpen)}
               style={{ width: '100%', justifyContent: 'space-between', padding: 0 }}
             >
-              <span style={{ fontWeight: 600, fontSize: '0.875rem' }}>Raw Verification Object</span>
+              <span style={{ fontWeight: 650, fontSize: '0.875rem', color: 'var(--primary-navy)' }}>Raw Verification Object</span>
               {techOpen ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
             </button>
             {techOpen && (
               <pre style={{
                 marginTop: 12,
                 padding: 12,
-                background: 'var(--bg-gray)',
+                background: '#F8FAFC',
                 borderRadius: 8,
                 fontSize: '0.75rem',
                 overflowX: 'auto',
@@ -370,8 +378,8 @@ ${sources || 'No external sources cited.'}
           <div className="modal-card" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <Share2 size={18} color="var(--green-primary)" />
-                <h3 style={{ fontSize: '1.0625rem' }}>Export Verification Report</h3>
+                <Share2 size={18} color="#1687E8" />
+                <h3 style={{ fontSize: '1.0625rem', color: 'var(--primary-navy)' }}>Export Verification Report</h3>
               </div>
               <button className="btn btn-ghost btn-sm" onClick={() => setIsExportOpen(false)} style={{ padding: 4 }}>
                 <X size={16} />
@@ -388,9 +396,9 @@ ${sources || 'No external sources cited.'}
                   onClick={handleCopyMarkdown}
                   style={{ justifyContent: 'flex-start', padding: '12px 16px', gap: 12 }}
                 >
-                  <FileText size={18} color="var(--green-primary)" />
+                  <FileText size={18} color="#10B981" />
                   <div style={{ textAlign: 'left' }}>
-                    <div style={{ fontWeight: 600, fontSize: '0.875rem' }}>
+                    <div style={{ fontWeight: 650, fontSize: '0.875rem', color: 'var(--primary-navy)' }}>
                       {copiedMarkdown ? '✓ Copied Markdown to Clipboard!' : 'Copy Formatted Markdown'}
                     </div>
                     <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
@@ -404,9 +412,9 @@ ${sources || 'No external sources cited.'}
                   onClick={handleDownloadJSON}
                   style={{ justifyContent: 'flex-start', padding: '12px 16px', gap: 12 }}
                 >
-                  <Download size={18} color="#3B82F6" />
+                  <Download size={18} color="#1687E8" />
                   <div style={{ textAlign: 'left' }}>
-                    <div style={{ fontWeight: 600, fontSize: '0.875rem' }}>Download JSON File</div>
+                    <div style={{ fontWeight: 650, fontSize: '0.875rem', color: 'var(--primary-navy)' }}>Download JSON File</div>
                     <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                       Full structured verification data with agent logs
                     </div>
@@ -429,8 +437,8 @@ ${sources || 'No external sources cited.'}
           <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 420 }}>
             <div className="modal-header">
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <Trash2 size={18} color="var(--error)" />
-                <h3 style={{ fontSize: '1.0625rem' }}>Delete Verification</h3>
+                <Trash2 size={18} color="#EF4444" />
+                <h3 style={{ fontSize: '1.0625rem', color: 'var(--primary-navy)' }}>Delete Verification</h3>
               </div>
               <button className="btn btn-ghost btn-sm" onClick={() => setIsDeleteOpen(false)} style={{ padding: 4 }}>
                 <X size={16} />
@@ -458,18 +466,18 @@ ${sources || 'No external sources cited.'}
 
 function TimelineCard({ icon: Icon, title, status, content, timestamp, children }) {
   return (
-    <div className="card" style={{ padding: 20 }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+    <div className="card" style={{ padding: 22 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{ width: 28, height: 28, background: 'var(--bg-gray)', borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Icon size={15} color="var(--text-secondary)" />
+          <div style={{ width: 28, height: 28, background: '#F8FAFC', borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Icon size={15} color="#1687E8" />
           </div>
-          <h3 style={{ fontSize: '0.9375rem', fontWeight: 600 }}>{title}</h3>
+          <h3 style={{ fontSize: '0.9375rem', fontWeight: 700, color: 'var(--primary-navy)', margin: 0 }}>{title}</h3>
         </div>
         {timestamp && <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{timestamp}</span>}
       </div>
       {content && (
-        <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+        <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', lineHeight: 1.6, margin: 0 }}>
           {content}
         </p>
       )}
@@ -483,8 +491,8 @@ function SummaryRow({ label, value, ok }) {
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
       <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>{label}</span>
       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-        {ok ? <CheckCircle size={14} color="var(--green-dark)" /> : <AlertTriangle size={14} color="var(--warning)" />}
-        <span style={{ fontSize: '0.8125rem', fontWeight: 550, color: 'var(--text-primary)' }}>{value}</span>
+        {ok ? <CheckCircle size={14} color="#10B981" /> : <AlertTriangle size={14} color="#F59E0B" />}
+        <span style={{ fontSize: '0.8125rem', fontWeight: 650, color: 'var(--primary-navy)' }}>{value}</span>
       </div>
     </div>
   );

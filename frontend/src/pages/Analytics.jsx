@@ -14,17 +14,17 @@ import Skeleton from '../components/ui/Skeleton';
 import ErrorState from '../components/ui/ErrorState';
 
 const OUTCOME_COLORS = {
-  verified: '#10B981',        // Luminous Emerald
-  conflict_resolved: '#6366F1',// Electric Indigo
-  unable_to_verify: '#F43F5E', // Rose
-  low_confidence: '#F59E0B',   // Amber
+  verified: '#10B981',         // Master Emerald
+  conflict_resolved: '#1687E8', // Master Blue
+  unable_to_verify: '#EF4444',  // Master Red
+  low_confidence: '#F59E0B',    // Master Orange
 };
 
 const DISTRIBUTION_COLORS = [
-  '#059669', // Very High: 90-100 (Deep Emerald)
-  '#10B981', // High: 75-89 (Bright Emerald)
-  '#F59E0B', // Moderate: 60-74 (Amber)
-  '#F43F5E', // Low: 0-59 (Rose)
+  '#10B981', // Very High: 90-100 (Emerald)
+  '#1687E8', // High: 75-89 (Blue)
+  '#F59E0B', // Moderate: 60-74 (Orange)
+  '#EF4444', // Low: 0-59 (Red)
 ];
 
 export default function Analytics() {
@@ -76,7 +76,7 @@ export default function Analytics() {
     }
   }
 
-  // Summary Metrics Cards
+  // Summary Metrics
   const summary = data?.summary || {
     total: 0,
     verified: 0,
@@ -89,76 +89,71 @@ export default function Analytics() {
   const kpis = [
     {
       id: 'total',
-      label: 'Total Verifications',
+      label: 'TOTAL VERIFICATIONS',
       value: summary.total,
       badge: 'All Engines',
-      badgeColor: 'var(--brand-light)',
-      badgeText: 'var(--brand-primary)',
-      icon: BarChart3,
-      iconColor: 'var(--brand-primary)',
-      iconBg: 'var(--brand-light)',
-      borderAccent: 'rgba(99, 102, 241, 0.3)',
+      badgeColor: '#ECFDF5',
+      badgeText: '#10B981',
+      icon: Layers,
+      iconColor: '#FFFFFF',
+      iconBg: '#10B981',
       desc: 'Fact-checks processed',
     },
     {
       id: 'accuracy',
-      label: 'Consensus Rate',
+      label: 'CONSENSUS RATE',
       value: `${summary.successRate}%`,
       badge: 'Verified Truth',
-      badgeColor: 'var(--emerald-light)',
-      badgeText: 'var(--emerald-dark)',
+      badgeColor: '#F0F9FF',
+      badgeText: '#1687E8',
       icon: ShieldCheck,
-      iconColor: 'var(--emerald-dark)',
-      iconBg: 'var(--emerald-light)',
-      borderAccent: 'rgba(16, 185, 129, 0.3)',
+      iconColor: '#FFFFFF',
+      iconBg: '#1687E8',
       desc: 'High-certainty verdicts',
     },
     {
       id: 'confidence',
-      label: 'Average Confidence',
+      label: 'AVERAGE CONFIDENCE',
       value: `${summary.avgConfidence}%`,
       badge: 'Multi-Agent',
-      badgeColor: 'rgba(124, 58, 237, 0.16)',
-      badgeText: '#A78BFA',
-      icon: Sparkles,
-      iconColor: '#8B5CF6',
-      iconBg: 'rgba(124, 58, 237, 0.16)',
-      borderAccent: 'rgba(124, 58, 237, 0.3)',
+      badgeColor: '#F5F3FF',
+      badgeText: '#7C3AED',
+      icon: TrendingUp,
+      iconColor: '#FFFFFF',
+      iconBg: '#7C3AED',
       desc: 'Aggregated reliability',
     },
     {
       id: 'conflicts',
-      label: 'Arbitrated Conflicts',
+      label: 'CONFLICTS IDENTIFIED',
       value: summary.conflicts,
       badge: 'Resolved',
-      badgeColor: 'var(--warning-light)',
-      badgeText: 'var(--warning)',
+      badgeColor: '#FFFBEB',
+      badgeText: '#F59E0B',
       icon: AlertTriangle,
-      iconColor: 'var(--warning)',
-      iconBg: 'var(--warning-light)',
-      borderAccent: 'rgba(217, 119, 6, 0.3)',
+      iconColor: '#FFFFFF',
+      iconBg: '#F59E0B',
       desc: 'Disagreements reconciled',
     },
     {
       id: 'unverified',
-      label: 'Inconclusive Claims',
+      label: 'INCONCLUSIVE CLAIMS',
       value: summary.unableToVerify,
       badge: 'Low Evidence',
-      badgeColor: 'var(--error-light)',
-      badgeText: 'var(--error)',
+      badgeColor: '#FFF1F2',
+      badgeText: '#EF4444',
       icon: HelpCircle,
-      iconColor: 'var(--error)',
-      iconBg: 'var(--error-light)',
-      borderAccent: 'rgba(225, 29, 72, 0.3)',
-      desc: 'Need manual investigation',
+      iconColor: '#FFFFFF',
+      iconBg: '#EF4444',
+      desc: 'Disputed or low evidence',
     },
   ];
 
   // Outcome Donut Data
   const outcomeData = [
-    { name: 'Verified Claims', value: data?.byStatus?.verified || 0, color: OUTCOME_COLORS.verified },
-    { name: 'Conflicts Resolved', value: data?.byStatus?.conflict_resolved || 0, color: OUTCOME_COLORS.conflict_resolved },
-    { name: 'Inconclusive / Unable', value: data?.byStatus?.unable_to_verify || 0, color: OUTCOME_COLORS.unable_to_verify },
+    { name: 'Verified Claims', value: data?.byStatus?.verified || (summary.total > 0 ? summary.verified : 0), color: OUTCOME_COLORS.verified },
+    { name: 'Conflicts Resolved', value: data?.byStatus?.conflict_resolved || (summary.total > 0 ? summary.conflicts : 0), color: OUTCOME_COLORS.conflict_resolved },
+    { name: 'Inconclusive / Unable', value: data?.byStatus?.unable_to_verify || (summary.total > 0 ? summary.unableToVerify : 0), color: OUTCOME_COLORS.unable_to_verify },
     { name: 'Low Confidence', value: data?.byStatus?.low_confidence || 0, color: OUTCOME_COLORS.low_confidence },
   ].filter(item => item.value > 0);
 
@@ -193,7 +188,7 @@ export default function Analytics() {
       {toastMsg && (
         <div className="toast-container">
           <div className="toast">
-            <CheckCircle2 size={18} color="var(--emerald-primary)" />
+            <CheckCircle2 size={18} color="#10B981" />
             <span>{toastMsg}</span>
           </div>
         </div>
@@ -202,31 +197,34 @@ export default function Analytics() {
       {/* Page Header */}
       <div className="page-header analytics-header">
         <div>
-          <div className="analytics-pill">
-            <Activity size={13} />
+          <div className="badge badge-blue" style={{ marginBottom: 8, padding: '4px 11px' }}>
+            <Activity size={13} style={{ marginRight: 4 }} />
             <span>REAL-TIME PLATFORM METRICS</span>
           </div>
-          <h1>Verification Analytics & Intelligence</h1>
-          <p>
+          <h1 style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--primary-navy)', letterSpacing: '-0.03em', margin: '4px 0 8px' }}>
+            Verification Analytics & <span className="hero-text-gradient">Intelligence</span>
+          </h1>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9375rem', maxWidth: 720 }}>
             Comprehensive telemetry on truth verification throughput, consensus accuracy, and multi-agent confidence.
           </p>
         </div>
 
         <div className="analytics-header-actions">
           <button
-            className="btn btn-secondary analytics-btn"
+            className="btn btn-secondary"
             onClick={() => load(true)}
             disabled={loading || refreshing}
             title="Refresh analytics data"
           >
-            <RefreshCw size={14} className={refreshing ? 'spin' : ''} />
+            <RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} />
             <span>Refresh</span>
           </button>
 
           {hasData && (
             <button
-              className="btn btn-secondary analytics-btn analytics-reset-btn"
+              className="btn btn-secondary"
               onClick={() => setShowResetModal(true)}
+              style={{ color: '#EF4444', borderColor: '#FECDD3' }}
               title="Reset all verification metrics"
             >
               <RotateCcw size={14} />
@@ -252,7 +250,6 @@ export default function Analytics() {
               <div
                 key={kpi.id}
                 className="card analytics-kpi-card"
-                style={{ '--accent-border': kpi.borderAccent }}
               >
                 <div className="kpi-top">
                   <span className="kpi-label">{kpi.label}</span>
@@ -260,7 +257,7 @@ export default function Analytics() {
                     className="kpi-icon-wrap"
                     style={{ background: kpi.iconBg }}
                   >
-                    <kpi.icon size={17} color={kpi.iconColor} />
+                    <kpi.icon size={16} color={kpi.iconColor} strokeWidth={2.4} />
                   </div>
                 </div>
 
@@ -305,20 +302,20 @@ export default function Analytics() {
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={activityData} margin={{ top: 10, right: 15, left: -20, bottom: 0 }}>
                   <defs>
-                    <linearGradient id="activityIndigo" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#4F46E5" stopOpacity={0.28} />
-                      <stop offset="95%" stopColor="#6366F1" stopOpacity={0.0} />
+                    <linearGradient id="activityGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#1687E8" stopOpacity={0.25} />
+                      <stop offset="95%" stopColor="#06B6D4" stopOpacity={0.0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#E5EAF1" vertical={false} />
                   <XAxis
                     dataKey="date"
-                    tick={{ fontSize: 11, fill: '#64748B' }}
+                    tick={{ fontSize: 11, fill: '#50627D' }}
                     tickLine={false}
-                    axisLine={{ stroke: '#E2E8F0' }}
+                    axisLine={{ stroke: '#E5EAF1' }}
                   />
                   <YAxis
-                    tick={{ fontSize: 11, fill: '#64748B' }}
+                    tick={{ fontSize: 11, fill: '#50627D' }}
                     tickLine={false}
                     axisLine={false}
                     allowDecimals={false}
@@ -328,11 +325,11 @@ export default function Analytics() {
                     type="monotone"
                     dataKey="count"
                     name="Verifications"
-                    stroke="#4F46E5"
+                    stroke="#1687E8"
                     strokeWidth={2.5}
                     fillOpacity={1}
-                    fill="url(#activityIndigo)"
-                    activeDot={{ r: 6, fill: '#4F46E5', stroke: '#FFFFFF', strokeWidth: 3 }}
+                    fill="url(#activityGradient)"
+                    activeDot={{ r: 6, fill: '#1687E8', stroke: '#FFFFFF', strokeWidth: 3 }}
                   />
                 </AreaChart>
               </ResponsiveContainer>
@@ -438,15 +435,15 @@ export default function Analytics() {
             ) : (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={distributionData} margin={{ top: 15, right: 10, left: -20, bottom: 0 }} barSize={36}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#E5EAF1" vertical={false} />
                   <XAxis
                     dataKey="short"
-                    tick={{ fontSize: 11, fill: '#64748B' }}
+                    tick={{ fontSize: 11, fill: '#50627D' }}
                     tickLine={false}
-                    axisLine={{ stroke: '#E2E8F0' }}
+                    axisLine={{ stroke: '#E5EAF1' }}
                   />
                   <YAxis
-                    tick={{ fontSize: 11, fill: '#64748B' }}
+                    tick={{ fontSize: 11, fill: '#50627D' }}
                     tickLine={false}
                     axisLine={false}
                     allowDecimals={false}
@@ -456,8 +453,8 @@ export default function Analytics() {
                     contentStyle={{
                       background: '#FFFFFF',
                       borderRadius: 8,
-                      border: '1px solid #E2E8F0',
-                      boxShadow: '0 8px 20px -4px rgba(0,0,0,0.1)',
+                      border: '1px solid #E5EAF1',
+                      boxShadow: '0 8px 24px -4px rgba(7,26,61,0.08)',
                       fontSize: 12,
                     }}
                     formatter={(v, name, item) => [v, item.payload.name]}
@@ -518,7 +515,7 @@ export default function Analytics() {
                           className="cat-progress-fill"
                           style={{
                             width: `${barPct}%`,
-                            background: idx === 0 ? 'linear-gradient(90deg, #4F46E5, #6366F1)' : '#10B981',
+                            background: idx === 0 ? 'linear-gradient(90deg, #10B981, #06B6D4)' : '#1687E8',
                           }}
                         />
                       </div>
@@ -537,7 +534,7 @@ export default function Analytics() {
           <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 440 }}>
             <div className="modal-header">
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <RotateCcw size={18} color="var(--error)" />
+                <RotateCcw size={18} color="#EF4444" />
                 <h3 style={{ fontSize: '1.0625rem' }}>Reset Analytics Statistics</h3>
               </div>
               <button
@@ -552,8 +549,8 @@ export default function Analytics() {
               <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
                 Are you sure you want to reset all verification analytics metrics?
               </p>
-              <div style={{ padding: '10px 12px', background: 'var(--error-light)', borderRadius: 8, border: '1px solid var(--error-border)' }}>
-                <div style={{ fontWeight: 600, fontSize: '0.8125rem', color: 'var(--error)', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div style={{ padding: '10px 12px', background: '#FFF1F2', borderRadius: 8, border: '1px solid #FECDD3' }}>
+                <div style={{ fontWeight: 600, fontSize: '0.8125rem', color: '#EF4444', display: 'flex', alignItems: 'center', gap: 6 }}>
                   <AlertTriangle size={15} />
                   This resets all historical counts, success rates, and chart data to zero.
                 </div>
@@ -590,52 +587,17 @@ export default function Analytics() {
           margin-bottom: 22px;
         }
 
-        .analytics-pill {
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          background: #EEF2FF;
-          color: var(--brand-primary);
-          border: 1px solid rgba(99, 102, 241, 0.25);
-          padding: 4px 10px;
-          border-radius: 999px;
-          font-size: 0.6875rem;
-          font-weight: 700;
-          letter-spacing: 0.06em;
-          margin-bottom: 8px;
+        .hero-text-gradient {
+          background: linear-gradient(135deg, #00A88A 0%, #06B6D4 50%, #1687E8 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          display: inline-block;
         }
 
         .analytics-header-actions {
           display: flex;
           align-items: center;
           gap: 10px;
-        }
-
-        .analytics-btn {
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          font-weight: 600;
-        }
-
-        .analytics-reset-btn {
-          color: var(--error);
-          border-color: rgba(239, 68, 68, 0.3);
-        }
-
-        .analytics-reset-btn:hover {
-          background: #FEF2F2;
-          border-color: var(--error);
-          color: #991B1B;
-        }
-
-        .spin {
-          animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
         }
 
         /* 5-column grid */
@@ -646,11 +608,11 @@ export default function Analytics() {
         }
 
         .analytics-kpi-card {
-          padding: 20px;
-          background: var(--bg-card);
+          padding: 18px 20px;
+          background: #FFFFFF;
           border: 1px solid var(--border);
           border-radius: var(--radius-md);
-          box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+          box-shadow: var(--shadow-sm);
           transition: all 0.2s ease;
           position: relative;
           overflow: hidden;
@@ -658,8 +620,8 @@ export default function Analytics() {
 
         .analytics-kpi-card:hover {
           transform: translateY(-2px);
-          box-shadow: 0 10px 24px -4px rgba(15, 23, 42, 0.07);
-          border-color: var(--accent-border, rgba(99, 102, 241, 0.35));
+          box-shadow: var(--shadow-md);
+          border-color: #CBD5E1;
         }
 
         .kpi-top {
@@ -670,19 +632,21 @@ export default function Analytics() {
         }
 
         .kpi-label {
-          font-size: 0.8125rem;
-          font-weight: 600;
+          font-size: 0.6875rem;
+          font-weight: 700;
           color: var(--text-muted);
+          letter-spacing: 0.05em;
         }
 
         .kpi-icon-wrap {
-          width: 34px;
-          height: 34px;
-          border-radius: 8px;
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
           display: flex;
           align-items: center;
           justify-content: center;
           flex-shrink: 0;
+          box-shadow: 0 2px 6px rgba(0,0,0,0.1);
         }
 
         .kpi-value-row {
@@ -695,7 +659,7 @@ export default function Analytics() {
         .kpi-value {
           font-size: 1.875rem;
           font-weight: 800;
-          color: var(--text-primary);
+          color: var(--primary-navy);
           line-height: 1;
           letter-spacing: -0.02em;
         }
@@ -722,10 +686,10 @@ export default function Analytics() {
 
         .analytics-chart-card {
           padding: 22px;
-          background: var(--bg-card);
+          background: #FFFFFF;
           border: 1px solid var(--border);
           border-radius: var(--radius-md);
-          box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+          box-shadow: var(--shadow-sm);
           display: flex;
           flex-direction: column;
         }
@@ -740,8 +704,8 @@ export default function Analytics() {
 
         .chart-card-header h3 {
           font-size: 1.0625rem;
-          font-weight: 700;
-          color: var(--text-primary);
+          font-weight: 750;
+          color: var(--primary-navy);
           margin-bottom: 4px;
         }
 
@@ -757,7 +721,7 @@ export default function Analytics() {
           font-size: 0.75rem;
           font-weight: 600;
           color: var(--text-secondary);
-          background: var(--bg-gray);
+          background: #F8FAFC;
           border: 1px solid var(--border);
           padding: 3px 9px;
           border-radius: 6px;
@@ -765,7 +729,7 @@ export default function Analytics() {
         }
 
         .chart-stat-chip span {
-          color: var(--brand-primary);
+          color: #1687E8;
           font-weight: 700;
           margin-right: 4px;
         }
@@ -798,7 +762,7 @@ export default function Analytics() {
         .center-num {
           font-size: 1.5rem;
           font-weight: 800;
-          color: var(--text-primary);
+          color: var(--primary-navy);
           line-height: 1;
         }
 
@@ -814,7 +778,7 @@ export default function Analytics() {
         .donut-legend-list {
           display: flex;
           flex-direction: column;
-          gap: 12px;
+          gap: 10px;
           flex: 1;
           min-width: 190px;
         }
@@ -824,7 +788,7 @@ export default function Analytics() {
           align-items: center;
           justify-content: space-between;
           padding: 8px 12px;
-          background: var(--bg-gray);
+          background: #F8FAFC;
           border-radius: 8px;
           border: 1px solid var(--border);
         }
@@ -845,7 +809,7 @@ export default function Analytics() {
         .legend-name {
           font-size: 0.8125rem;
           font-weight: 600;
-          color: var(--text-primary);
+          color: var(--primary-navy);
         }
 
         .legend-val-col {
@@ -856,13 +820,13 @@ export default function Analytics() {
 
         .legend-count {
           font-size: 0.875rem;
-          color: var(--text-primary);
+          color: var(--primary-navy);
         }
 
         .legend-pct {
           font-size: 0.6875rem;
           color: var(--text-muted);
-          background: var(--bg-card);
+          background: #FFFFFF;
           padding: 1px 5px;
           border-radius: 4px;
           border: 1px solid var(--border);
@@ -895,8 +859,8 @@ export default function Analytics() {
         .cat-rank {
           font-size: 0.6875rem;
           font-weight: 700;
-          color: var(--brand-primary);
-          background: var(--brand-light);
+          color: #1687E8;
+          background: #F0F9FF;
           padding: 1px 5px;
           border-radius: 4px;
         }
@@ -904,7 +868,7 @@ export default function Analytics() {
         .cat-name {
           font-size: 0.8125rem;
           font-weight: 600;
-          color: var(--text-primary);
+          color: var(--primary-navy);
           text-transform: capitalize;
         }
 
@@ -916,7 +880,7 @@ export default function Analytics() {
         }
 
         .cat-counts strong {
-          color: var(--text-primary);
+          color: var(--primary-navy);
         }
 
         .cat-pct {
@@ -926,7 +890,7 @@ export default function Analytics() {
 
         .cat-progress-track {
           height: 7px;
-          background: var(--bg-gray);
+          background: #F1F5F9;
           border-radius: 999px;
           overflow: hidden;
         }
@@ -975,16 +939,16 @@ function EmptyChartState({ title, description }) {
           height: 44,
           borderRadius: 12,
           background: '#F8FAFC',
-          border: '1px solid #E2E8F0',
+          border: '1px solid #E5EAF1',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           marginBottom: 10,
         }}
       >
-        <BarChart3 size={20} color="#94A3B8" />
+        <BarChart3 size={20} color="#8A9AB3" />
       </div>
-      <div style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+      <div style={{ fontWeight: 650, fontSize: '0.875rem', color: 'var(--primary-navy)' }}>
         {title}
       </div>
       <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', maxWidth: 280, marginTop: 4 }}>
@@ -999,10 +963,10 @@ function CustomTooltip({ active, payload, label }) {
     return (
       <div
         style={{
-          background: 'var(--bg-card)',
-          border: '1px solid var(--border)',
+          background: '#FFFFFF',
+          border: '1px solid #E5EAF1',
           borderRadius: 8,
-          boxShadow: '0 8px 24px -4px rgba(0, 0, 0, 0.4)',
+          boxShadow: '0 8px 24px -4px rgba(7, 26, 61, 0.1)',
           padding: '8px 12px',
         }}
       >
@@ -1010,8 +974,8 @@ function CustomTooltip({ active, payload, label }) {
           {label}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.8125rem' }}>
-          <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#4F46E5' }} />
-          <span style={{ color: 'var(--text-primary)', fontWeight: 700 }}>
+          <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#1687E8' }} />
+          <span style={{ color: 'var(--primary-navy)', fontWeight: 700 }}>
             {payload[0].value} {payload[0].value === 1 ? 'Verification' : 'Verifications'}
           </span>
         </div>

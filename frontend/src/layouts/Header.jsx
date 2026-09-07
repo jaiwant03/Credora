@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Menu, Search, ShieldCheck, Sun, Moon, Command, Sparkles } from 'lucide-react';
+import { Menu, Search, Bell, Sun, Moon, Command, CheckCircle2, AlertTriangle, Sparkles, Trash2, Check } from 'lucide-react';
+import { useNotifications } from '../context/NotificationContext';
 
 const PAGE_TITLES = {
   '/': 'Verification Dashboard',
@@ -16,46 +17,31 @@ export default function Header({ onMenuToggle }) {
   const location = useLocation();
   const navigate = useNavigate();
   const [searchVal, setSearchVal] = useState('');
-  const [theme, setTheme] = useState(() => {
-    return localStorage.getItem('verifyai_theme') || 'light';
-  });
+  const [showNotifications, setShowNotifications] = useState(false);
+  const notifRef = useRef(null);
 
-  const applyTheme = (newTheme) => {
-    setTheme(newTheme);
-    localStorage.setItem('verifyai_theme', newTheme);
-    if (newTheme === 'dark') {
-      document.documentElement.setAttribute('data-theme', 'dark');
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.removeAttribute('data-theme');
-      document.documentElement.classList.remove('dark');
-    }
-  };
-
-  useEffect(() => {
-    applyTheme(theme);
-  }, [theme]);
-
-  useEffect(() => {
-    function handleStorageChange(e) {
-      const incomingTheme = e?.detail?.theme || localStorage.getItem('verifyai_theme') || 'light';
-      setTheme(incomingTheme);
-    }
-    window.addEventListener('storage', handleStorageChange);
-    window.addEventListener('verifyai_theme_change', handleStorageChange);
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('verifyai_theme_change', handleStorageChange);
-    };
-  }, []);
-
-  const toggleTheme = () => {
-    const next = theme === 'dark' ? 'light' : 'dark';
-    applyTheme(next);
-    window.dispatchEvent(new CustomEvent('verifyai_theme_change', { detail: { theme: next } }));
-  };
+  const {
+    theme,
+    toggleTheme,
+    notifications,
+    unreadCount,
+    markAsRead,
+    markAllAsRead,
+    clearAllNotifications,
+  } = useNotifications();
 
   const title = PAGE_TITLES[location.pathname] || 'VerifyAI';
+
+  // Close notifications popover on click outside
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (notifRef.current && !notifRef.current.contains(e.target)) {
+        setShowNotifications(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   function handleSearch(e) {
     e.preventDefault();
@@ -65,20 +51,29 @@ export default function Header({ onMenuToggle }) {
     }
   }
 
+  function handleNotificationClick(notif) {
+    markAsRead(notif.id);
+    setShowNotifications(false);
+    if (notif.question) {
+      navigate('/verify', { state: { initialQuestion: notif.question, autoSubmit: false } });
+    }
+  }
+
   return (
     <header className="app-header">
-      {/* Mobile menu btn */}
+      {/* Mobile menu button */}
       <button className="header-menu-btn" onClick={onMenuToggle} aria-label="Open menu">
         <Menu size={20} />
       </button>
 
-      {/* Page title with subtle badge */}
+      {/* Page Title */}
       <div className="header-title-container">
-        <h2 className="header-title">{title}</h2>
+        <h1 className="header-title">{title}</h1>
       </div>
 
-      {/* Right actions */}
+      {/* Right Actions */}
       <div className="header-actions">
+        {/* Search bar matching reference */}
         <form className="header-search" onSubmit={handleSearch}>
           <Search size={15} className="header-search-icon" />
           <input
@@ -88,37 +83,151 @@ export default function Header({ onMenuToggle }) {
             onChange={(e) => setSearchVal(e.target.value)}
             className="header-search-input"
           />
-          <kbd className="header-search-kbd">
+          <span className="header-search-kbd">
             <Command size={10} style={{ marginRight: 2 }} />K
-          </kbd>
+          </span>
         </form>
 
-        {/* Theme toggle */}
+        {/* Notification Bell with Dynamic Popover */}
+        <div className="notification-popover-wrapper" ref={notifRef}>
+          <button
+            className={`header-icon-btn ${showNotifications ? 'header-icon-btn--active' : ''}`}
+            title="Notifications"
+            aria-label="Notifications"
+            onClick={() => setShowNotifications((prev) => !prev)}
+          >
+            <Bell size={18} />
+            {unreadCount > 0 && (
+              <span className="header-badge-count">{unreadCount > 9 ? '9+' : unreadCount}</span>
+            )}
+          </button>
+
+          {showNotifications && (
+            <div className="notification-dropdown">
+              <div className="notification-dropdown-header">
+                <div className="notification-dropdown-title-group">
+                  <span className="notification-dropdown-title">Notifications</span>
+                  {unreadCount > 0 && (
+                    <span className="notification-unread-pill">{unreadCount} new</span>
+                  )}
+                </div>
+                <div className="notification-header-actions">
+                  {unreadCount > 0 && (
+                    <button
+                      className="notification-header-btn"
+                      onClick={markAllAsRead}
+                      title="Mark all as read"
+                    >
+                      <Check size={13} style={{ marginRight: 3 }} />
+                      Read all
+                    </button>
+                  )}
+                  {notifications.length > 0 && (
+                    <button
+                      className="notification-header-btn"
+                      onClick={clearAllNotifications}
+                      title="Clear all"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <div className="notification-list">
+                {notifications.length === 0 ? (
+                  <div className="notification-empty">
+                    <div className="notification-empty-icon">
+                      <Bell size={20} />
+                    </div>
+                    <span style={{ fontWeight: 650, fontSize: '0.8125rem', color: 'var(--text-primary)' }}>
+                      All caught up!
+                    </span>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                      Completed verifications and alerts will appear here.
+                    </span>
+                  </div>
+                ) : (
+                  notifications.map((n) => {
+                    const isVerified = n.status === 'verified';
+                    const isDisputed = n.status === 'disputed' || n.status === 'false';
+                    const iconColor = isVerified ? '#10B981' : isDisputed ? '#EF4444' : '#06B6D4';
+                    const iconBg = isVerified
+                      ? 'rgba(16, 185, 129, 0.12)'
+                      : isDisputed
+                      ? 'rgba(239, 68, 68, 0.12)'
+                      : 'rgba(6, 182, 212, 0.12)';
+
+                    return (
+                      <div
+                        key={n.id}
+                        className={`notification-item ${!n.read ? 'is-unread' : ''}`}
+                        onClick={() => handleNotificationClick(n)}
+                      >
+                        <div className="notification-icon-box" style={{ background: iconBg }}>
+                          {isVerified ? (
+                            <CheckCircle2 size={16} color={iconColor} />
+                          ) : isDisputed ? (
+                            <AlertTriangle size={16} color={iconColor} />
+                          ) : (
+                            <Sparkles size={16} color={iconColor} />
+                          )}
+                        </div>
+                        <div className="notification-body">
+                          <div className="notification-item-top">
+                            <span className="notification-item-title">{n.title}</span>
+                            <span className="notification-item-time">{n.time}</span>
+                          </div>
+                          <p className="notification-item-msg">{n.message}</p>
+                          {n.confidence && (
+                            <span
+                              className="notification-item-pill"
+                              style={{
+                                background: isVerified ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                                color: isVerified ? '#10B981' : '#EF4444',
+                              }}
+                            >
+                              {n.confidence}% Confidence
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Theme Toggle Button (Light/Dark) */}
         <button
           className="header-icon-btn"
+          title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+          aria-label="Theme mode toggle"
           onClick={toggleTheme}
-          title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
-          aria-label="Toggle theme"
         >
-          {theme === 'dark' ? <Sun size={17} color="#F59E0B" /> : <Moon size={17} />}
+          {theme === 'dark' ? (
+            <Sun size={18} color="#FBBF24" />
+          ) : (
+            <Moon size={18} />
+          )}
         </button>
 
-        {/* Verified Shield Badge Avatar */}
-        <div className="header-avatar" title="VerifyAI Multi-Agent Consensus Online">
-          <ShieldCheck size={17} color="#FFFFFF" strokeWidth={2.4} />
+        {/* User Profile Avatar matching reference ('VK' in vibrant teal-cyan) */}
+        <div className="header-profile-avatar" title="Account profile (VK)">
+          VK
         </div>
       </div>
 
       <style>{`
         .app-header {
           height: var(--header-height);
-          background: var(--bg-glass);
-          backdrop-filter: blur(16px);
-          -webkit-backdrop-filter: blur(16px);
+          background: var(--bg-card);
           border-bottom: 1px solid var(--border);
           display: flex;
           align-items: center;
-          padding: 0 32px;
+          padding: 0 36px;
           gap: 16px;
           position: sticky;
           top: 0;
@@ -134,19 +243,16 @@ export default function Header({ onMenuToggle }) {
           padding: 6px;
           border-radius: 8px;
         }
-        .header-menu-btn:hover { background: var(--bg-gray); }
+        .header-menu-btn:hover { background: var(--bg-secondary); }
 
         .header-title-container {
           flex: 1;
-          display: flex;
-          align-items: center;
-          gap: 10px;
         }
 
         .header-title {
           font-family: var(--font-display);
           font-weight: 750;
-          font-size: 1.0625rem;
+          font-size: 1.125rem;
           color: var(--text-primary);
           letter-spacing: -0.015em;
           margin: 0;
@@ -155,103 +261,120 @@ export default function Header({ onMenuToggle }) {
         .header-actions {
           display: flex;
           align-items: center;
-          gap: 12px;
+          gap: 14px;
         }
 
+        /* Search input with ⌘K */
         .header-search {
-          position: relative;
           display: flex;
           align-items: center;
+          background: var(--bg-card);
+          border: 1px solid var(--border);
+          border-radius: 10px;
+          padding: 0 12px;
+          height: 38px;
+          width: 270px;
+          transition: all 0.2s ease;
+          position: relative;
+        }
+
+        .header-search:focus-within {
+          border-color: var(--primary-cyan);
+          box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.16);
         }
 
         .header-search-icon {
-          position: absolute;
-          left: 12px;
           color: var(--text-muted);
-          pointer-events: none;
+          margin-right: 8px;
+          flex-shrink: 0;
         }
 
         .header-search-input {
-          padding: 8px 36px 8px 36px;
-          border: 1px solid var(--border);
-          border-radius: 999px;
+          border: none;
+          background: transparent;
           font-size: 0.8125rem;
           color: var(--text-primary);
-          background: var(--bg-card);
-          box-shadow: var(--shadow-xs);
           outline: none;
-          width: 240px;
-          transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+          width: 100%;
         }
 
-        .header-search-input:focus {
-          border-color: var(--brand-secondary);
-          background: var(--bg-card);
-          box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15), var(--shadow-sm);
-          width: 290px;
+        .header-search-input::placeholder {
+          color: var(--text-muted);
         }
-
-        .header-search-input::placeholder { color: var(--text-muted); }
 
         .header-search-kbd {
-          position: absolute;
-          right: 12px;
-          display: flex;
+          display: inline-flex;
           align-items: center;
-          background: var(--bg-gray);
-          border: 1px solid var(--border);
-          border-radius: 4px;
-          padding: 2px 5px;
-          font-size: 0.65rem;
+          font-size: 0.6875rem;
+          font-family: var(--font-sans);
           font-weight: 600;
           color: var(--text-muted);
-          pointer-events: none;
+          background: var(--bg-secondary);
+          border: 1px solid var(--border);
+          border-radius: 5px;
+          padding: 2px 6px;
+          margin-left: 6px;
+          flex-shrink: 0;
         }
 
         .header-icon-btn {
           position: relative;
-          background: var(--bg-card);
-          border: 1px solid var(--border);
-          border-radius: 10px;
+          background: transparent;
+          border: none;
+          color: var(--text-secondary);
           width: 36px;
           height: 36px;
-          color: var(--text-secondary);
+          border-radius: 9px;
           display: flex;
           align-items: center;
           justify-content: center;
-          box-shadow: var(--shadow-xs);
-          transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+          transition: all 0.15s ease;
         }
 
-        .header-icon-btn:hover {
-          background: var(--bg-gray);
-          border-color: var(--border-hover);
+        .header-icon-btn:hover, .header-icon-btn--active {
+          background: var(--bg-secondary);
           color: var(--text-primary);
-          transform: translateY(-1px);
         }
 
-        .header-avatar {
+        .header-badge-count {
+          position: absolute;
+          top: 4px;
+          right: 4px;
+          background: var(--primary-blue);
+          color: #FFFFFF;
+          font-size: 0.625rem;
+          font-weight: 700;
+          min-width: 15px;
+          height: 15px;
+          border-radius: 10px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 0 3px;
+          border: 1.5px solid var(--bg-card);
+        }
+
+        /* Profile Avatar VK */
+        .header-profile-avatar {
           width: 36px;
           height: 36px;
-          border-radius: 10px;
-          background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-secondary) 100%);
+          border-radius: 50%;
+          background: linear-gradient(135deg, #00A88A 0%, #06B6D4 100%);
+          color: #FFFFFF;
+          font-size: 0.8125rem;
+          font-weight: 750;
           display: flex;
           align-items: center;
           justify-content: center;
           cursor: pointer;
-          box-shadow: 0 2px 8px rgba(79, 70, 229, 0.25);
-          transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        .header-avatar:hover {
-          box-shadow: 0 4px 14px rgba(79, 70, 229, 0.4);
-          transform: scale(1.05);
+          user-select: none;
+          box-shadow: 0 2px 6px rgba(0, 168, 138, 0.25);
         }
 
         @media (max-width: 768px) {
+          .app-header { padding: 0 16px; }
           .header-menu-btn { display: flex; }
           .header-search { display: none; }
-          .app-header { padding: 0 16px; }
         }
       `}</style>
     </header>

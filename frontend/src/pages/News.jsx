@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Newspaper, Search, RefreshCw, ExternalLink, ShieldCheck,
   Globe, Sparkles, Zap, Flame, Clock, Radio, ChevronRight,
-  TrendingUp, BookOpen, AlertCircle
+  TrendingUp, BookOpen, AlertCircle, CheckCircle2, Plus
 } from 'lucide-react';
 import { getLiveNews, searchNews } from '../services/api';
 
@@ -19,6 +19,24 @@ const CATEGORIES = [
   { id: 'entertainment', label: 'Entertainment', icon: BookOpen },
   { id: 'sports', label: 'Sports', icon: Radio },
 ];
+
+// Helper to assign a cohesive multi-color palette to various publishers
+function getPublisherStyle(publisher = '') {
+  const p = publisher.toLowerCase();
+  if (p.includes('ap') || p.includes('reuters') || p.includes('npr')) {
+    return { badgeClass: 'badge-green', btnClass: 'btn-emerald', color: '#10B981' };
+  }
+  if (p.includes('fox weather') || p.includes('cnn') || p.includes('weather') || p.includes('sky')) {
+    return { badgeClass: 'badge-blue', btnClass: 'btn-blue', color: '#1687E8' };
+  }
+  if (p.includes('cbs') || p.includes('bloomberg') || p.includes('cnbc') || p.includes('times')) {
+    return { badgeClass: 'badge-orange', btnClass: 'btn-orange', color: '#F59E0B' };
+  }
+  if (p.includes('fox') || p.includes('the verge') || p.includes('wired') || p.includes('guardian')) {
+    return { badgeClass: 'badge-purple', btnClass: 'btn-purple', color: '#7C3AED' };
+  }
+  return { badgeClass: 'badge-blue', btnClass: 'btn-cyan', color: '#06B6D4' };
+}
 
 export default function News() {
   const navigate = useNavigate();
@@ -70,7 +88,6 @@ export default function News() {
   }
 
   function handleVerifyArticle(article) {
-    // Navigate to verify page with pre-filled question
     const query = `Is it true: "${article.title}"?`;
     navigate('/verify', { state: { initialQuestion: query, autoSubmit: true } });
   }
@@ -108,22 +125,24 @@ export default function News() {
       <div className="page-header news-header">
         <div className="news-header-top">
           <div>
-            <div className="news-live-badge">
-              <span className="live-pulse" />
+            <div className="badge badge-green" style={{ marginBottom: 8, padding: '4px 11px' }}>
+              <span className="sonar-ping-dot" style={{ width: 6, height: 6 }} />
               <span>LIVE GOOGLE NEWS & WIKIPEDIA FEEDS</span>
             </div>
-            <h1>Global Real-Time News & Fact Checker</h1>
-            <p>
+            <h1 style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--primary-navy)', letterSpacing: '-0.03em', margin: '4px 0 8px' }}>
+              Global Real-Time News & <span className="hero-text-gradient">Fact Checker</span>
+            </h1>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9375rem', maxWidth: 720 }}>
               Browse live breaking news and fact-check any headline across AI models, Wikipedia, and global sources in real time.
             </p>
           </div>
           <button
-            className="btn btn--secondary refresh-btn"
+            className="btn btn-secondary refresh-btn"
             onClick={() => isSearching ? handleSearch({ preventDefault: () => {} }) : fetchNews(selectedCategory)}
             disabled={loading}
             title="Refresh news stream"
           >
-            <RefreshCw size={15} className={loading ? 'animate-spin' : ''} />
+            <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
             <span>Refresh</span>
           </button>
         </div>
@@ -131,7 +150,7 @@ export default function News() {
         {/* Search Bar */}
         <form onSubmit={handleSearch} className="news-search-form">
           <div className="news-search-box">
-            <Search size={18} className="news-search-icon" />
+            <Search size={17} className="news-search-icon" />
             <input
               type="text"
               placeholder="Search live news claims, breaking events, entities, or topics..."
@@ -151,7 +170,7 @@ export default function News() {
                 ✕
               </button>
             )}
-            <button type="submit" className="btn btn--primary news-search-submit">
+            <button type="submit" className="btn btn-primary btn-sm" style={{ padding: '7px 16px' }}>
               Search Live News
             </button>
           </div>
@@ -164,9 +183,10 @@ export default function News() {
               <button
                 key={id}
                 onClick={() => setSelectedCategory(id)}
-                className={`news-cat-pill ${selectedCategory === id ? 'news-cat-pill--active' : ''}`}
+                className={`filter-chip ${selectedCategory === id ? 'filter-chip--active' : ''}`}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
               >
-                <Icon size={14} />
+                <Icon size={13} />
                 <span>{label}</span>
               </button>
             ))}
@@ -177,7 +197,7 @@ export default function News() {
           <div className="search-status-bar">
             <span>Showing search results for: <strong>"{searchQuery}"</strong></span>
             <button
-              className="btn btn--ghost btn--sm"
+              className="btn btn-ghost btn-sm"
               onClick={() => {
                 setSearchQuery('');
                 setIsSearching(false);
@@ -195,10 +215,10 @@ export default function News() {
         <div className="news-error-banner card">
           <AlertCircle size={20} color="#EF4444" />
           <div style={{ flex: 1 }}>
-            <strong>Unable to load news</strong>
+            <strong style={{ color: '#EF4444' }}>Unable to load news</strong>
             <p style={{ margin: '2px 0 0', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{error}</p>
           </div>
-          <button className="btn btn--secondary btn--sm" onClick={() => fetchNews(selectedCategory)}>
+          <button className="btn btn-secondary btn-sm" onClick={() => fetchNews(selectedCategory)}>
             Try Again
           </button>
         </div>
@@ -221,65 +241,77 @@ export default function News() {
       {/* Articles Grid */}
       {!loading && articles.length > 0 && (
         <div className="news-grid">
-          {articles.map((article) => (
-            <div key={article.id || article.link} className="card news-card fade-in-up">
-              <div className="news-card-header">
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', flex: 1, minWidth: 0 }}>
-                  <span className="news-publisher-tag">
-                    {article.publisher || 'Verified News'}
-                  </span>
-                  {article.credible && (
-                    <span className="news-trusted-badge" title="High-reputation verified wire source">
-                      <ShieldCheck size={11} /> Trusted Source
+          {articles.map((article) => {
+            const pubStyle = getPublisherStyle(article.publisher);
+
+            return (
+              <div key={article.id || article.link} className="card news-card fade-in-up">
+                <div className="news-card-header">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', flex: 1, minWidth: 0 }}>
+                    <span className={`badge ${pubStyle.badgeClass}`}>
+                      {article.publisher || 'Verified News'}
                     </span>
-                  )}
-                  {(article.language === 'ta' || /[\u0B80-\u0BFF]/.test(article.title || '')) && (
-                    <span className="news-tamil-badge">தமிழ்</span>
-                  )}
+                    {article.credible && (
+                      <span className="badge badge-green" title="High-reputation verified wire source" style={{ fontSize: '0.6875rem' }}>
+                        <ShieldCheck size={11} /> Trusted
+                      </span>
+                    )}
+                    {(article.language === 'ta' || /[\u0B80-\u0BFF]/.test(article.title || '')) && (
+                      <span className="badge badge-orange" style={{ fontSize: '0.6875rem' }}>தமிழ்</span>
+                    )}
+                  </div>
+                  <span className="news-time">
+                    <Clock size={12} style={{ marginRight: 4 }} />
+                    {formatTimeAgo(article.publishedAt || article.pubDate)}
+                  </span>
                 </div>
-                <span className="news-time">
-                  <Clock size={12} style={{ marginRight: 4 }} />
-                  {formatTimeAgo(article.publishedAt || article.pubDate)}
-                </span>
+
+                <h3 className="news-title">{article.title}</h3>
+
+                <p className="news-snippet">{cleanSnippet(article.snippet, article.title, article.publisher)}</p>
+
+                <div className="news-card-footer">
+                  <a
+                    href={article.link || article.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="news-source-link"
+                    title="Open original news report in new tab"
+                  >
+                    <span>Source Outlet</span>
+                    <ExternalLink size={12} />
+                  </a>
+
+                  <button
+                    className="btn btn-sm"
+                    style={{
+                      backgroundColor: pubStyle.color,
+                      color: '#FFFFFF',
+                      border: 'none',
+                      borderRadius: 8,
+                      fontWeight: 650,
+                      gap: 5
+                    }}
+                    onClick={() => handleVerifyArticle(article)}
+                  >
+                    <Plus size={13} strokeWidth={2.6} />
+                    <span>Verify Claim</span>
+                  </button>
+                </div>
               </div>
-
-              <h3 className="news-title">{article.title}</h3>
-
-              <p className="news-snippet">{cleanSnippet(article.snippet, article.title, article.publisher)}</p>
-
-              <div className="news-card-footer">
-                <a
-                  href={article.link || article.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="news-source-link"
-                  title="Open original news report in new tab"
-                >
-                  <span>Source Outlet</span>
-                  <ExternalLink size={13} />
-                </a>
-
-                <button
-                  className="btn btn--primary btn--sm news-verify-btn"
-                  onClick={() => handleVerifyArticle(article)}
-                >
-                  <ShieldCheck size={14} />
-                  <span>Fact-Check News</span>
-                </button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
       {/* Empty State */}
       {!loading && !error && articles.length === 0 && (
         <div className="card news-empty-state">
-          <Newspaper size={48} color="var(--text-muted)" style={{ marginBottom: 12 }} />
-          <h3>No breaking articles found</h3>
-          <p>Try searching for a different topic or switch category filters.</p>
+          <Newspaper size={48} color="#8A9AB3" style={{ marginBottom: 12 }} />
+          <h3 style={{ color: 'var(--primary-navy)' }}>No breaking articles found</h3>
+          <p style={{ color: 'var(--text-secondary)' }}>Try searching for a different topic or switch category filters.</p>
           <button
-            className="btn btn--secondary"
+            className="btn btn-secondary"
             style={{ marginTop: 12 }}
             onClick={() => {
               setSearchQuery('');
@@ -297,42 +329,19 @@ export default function News() {
           margin-bottom: 24px;
         }
 
+        .hero-text-gradient {
+          background: linear-gradient(135deg, #00A88A 0%, #06B6D4 50%, #1687E8 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          display: inline-block;
+        }
+
         .news-header-top {
           display: flex;
           justify-content: space-between;
           align-items: flex-start;
           gap: 16px;
           margin-bottom: 18px;
-        }
-
-        .news-live-badge {
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          background: var(--emerald-light);
-          color: var(--emerald-dark);
-          font-size: 0.6875rem;
-          font-weight: 700;
-          letter-spacing: 0.06em;
-          padding: 4px 10px;
-          border-radius: 999px;
-          border: 1px solid var(--emerald-border);
-          margin-bottom: 8px;
-        }
-
-        .live-pulse {
-          width: 7px;
-          height: 7px;
-          background: #10B981;
-          border-radius: 50%;
-          box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
-          animation: pulse-ring 1.8s infinite;
-        }
-
-        @keyframes pulse-ring {
-          0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
-          70% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
-          100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
         }
 
         .refresh-btn {
@@ -349,18 +358,18 @@ export default function News() {
         .news-search-box {
           display: flex;
           align-items: center;
-          background: var(--bg-card);
+          background: #FFFFFF;
           border: 1px solid var(--border);
           border-radius: var(--radius-md);
-          padding: 4px 6px 4px 14px;
+          padding: 5px 6px 5px 14px;
           gap: 10px;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+          box-shadow: var(--shadow-sm);
           transition: all 0.2s ease;
         }
 
         .news-search-box:focus-within {
-          border-color: var(--brand-secondary);
-          box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15), var(--shadow-sm);
+          border-color: #06B6D4;
+          box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.15);
         }
 
         .news-search-icon {
@@ -373,7 +382,7 @@ export default function News() {
           border: none;
           outline: none;
           font-size: 0.9375rem;
-          color: var(--text-primary);
+          color: var(--primary-navy);
           background: transparent;
         }
 
@@ -386,12 +395,6 @@ export default function News() {
           padding: 4px 6px;
         }
 
-        .news-search-submit {
-          padding: 8px 16px;
-          font-size: 0.875rem;
-          white-space: nowrap;
-        }
-
         .news-categories {
           display: flex;
           gap: 8px;
@@ -400,46 +403,16 @@ export default function News() {
           scrollbar-width: thin;
         }
 
-        .news-cat-pill {
-          display: flex;
-          align-items: center;
-          gap: 7px;
-          padding: 7px 15px;
-          background: var(--bg-card);
-          border: 1px solid var(--border);
-          border-radius: 999px;
-          font-size: 0.8125rem;
-          font-weight: 550;
-          color: var(--text-secondary);
-          cursor: pointer;
-          white-space: nowrap;
-          transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        .news-cat-pill:hover {
-          background: var(--bg-gray);
-          color: var(--brand-primary);
-          border-color: var(--border-hover);
-        }
-
-        .news-cat-pill--active {
-          background: var(--brand-light);
-          color: var(--brand-primary);
-          border-color: rgba(99, 102, 241, 0.4);
-          font-weight: 650;
-          box-shadow: 0 1px 6px rgba(99, 102, 241, 0.15);
-        }
-
         .search-status-bar {
           display: flex;
           justify-content: space-between;
           align-items: center;
           padding: 10px 16px;
-          background: var(--brand-light);
+          background: #F0F9FF;
           border-radius: var(--radius-sm);
           font-size: 0.875rem;
-          color: var(--brand-hover);
-          border: 1px solid rgba(99, 102, 241, 0.2);
+          color: #0284C7;
+          border: 1px solid #BAE6FD;
         }
 
         .news-grid {
@@ -452,7 +425,7 @@ export default function News() {
           display: flex;
           flex-direction: column;
           padding: 22px;
-          background: var(--bg-card);
+          background: #FFFFFF;
           border: 1px solid var(--border);
           border-radius: var(--radius-md);
           box-shadow: var(--shadow-sm);
@@ -461,8 +434,8 @@ export default function News() {
 
         .news-card:hover {
           transform: translateY(-3px);
-          box-shadow: 0 14px 28px -6px rgba(15, 23, 42, 0.08), 0 0 0 1px rgba(99, 102, 241, 0.25);
-          border-color: rgba(99, 102, 241, 0.35);
+          box-shadow: var(--shadow-md);
+          border-color: #CBD5E1;
         }
 
         .news-card-header {
@@ -470,49 +443,6 @@ export default function News() {
           justify-content: space-between;
           align-items: center;
           margin-bottom: 12px;
-        }
-
-        .news-publisher-tag {
-          font-size: 0.725rem;
-          font-weight: 700;
-          color: var(--brand-primary);
-          background: var(--brand-light);
-          border: 1px solid rgba(99, 102, 241, 0.2);
-          padding: 3px 8px;
-          border-radius: 6px;
-          max-width: 180px;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-        }
-
-        .news-trusted-badge {
-          display: inline-flex;
-          align-items: center;
-          gap: 3px;
-          font-size: 0.6875rem;
-          font-weight: 700;
-          color: var(--emerald-dark);
-          background: var(--emerald-light);
-          border: 1px solid var(--emerald-border);
-          padding: 2px 7px;
-          border-radius: 6px;
-          letter-spacing: 0.02em;
-          white-space: nowrap;
-        }
-
-        .news-tamil-badge {
-          display: inline-flex;
-          align-items: center;
-          font-size: 0.6875rem;
-          font-weight: 700;
-          color: var(--warning);
-          background: var(--warning-light);
-          border: 1px solid var(--warning-border);
-          padding: 2px 6px;
-          border-radius: 6px;
-          letter-spacing: 0.02em;
-          white-space: nowrap;
         }
 
         .news-time {
@@ -523,9 +453,9 @@ export default function News() {
         }
 
         .news-title {
-          font-size: 0.985rem;
-          font-weight: 650;
-          color: var(--text-primary);
+          font-size: 1rem;
+          font-weight: 700;
+          color: var(--primary-navy);
           line-height: 1.4;
           margin-bottom: 8px;
           display: -webkit-box;
@@ -537,7 +467,7 @@ export default function News() {
         .news-snippet {
           font-size: 0.845rem;
           color: var(--text-secondary);
-          line-height: 1.5;
+          line-height: 1.55;
           margin-bottom: 16px;
           flex: 1;
           display: -webkit-box;
@@ -550,8 +480,8 @@ export default function News() {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          padding-top: 12px;
-          border-top: 1px solid var(--border-light);
+          padding-top: 14px;
+          border-top: 1px solid var(--border);
           margin-top: auto;
           gap: 10px;
         }
@@ -567,16 +497,8 @@ export default function News() {
         }
 
         .news-source-link:hover {
-          color: var(--text-primary);
+          color: var(--primary-navy);
           text-decoration: underline;
-        }
-
-        .news-verify-btn {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          padding: 6px 12px;
-          font-size: 0.8125rem;
         }
 
         .news-error-banner {
@@ -584,6 +506,8 @@ export default function News() {
           align-items: center;
           gap: 12px;
           padding: 16px;
+          background: #FFF1F2;
+          border: 1px solid #FECDD3;
           border-left: 4px solid #EF4444;
           margin-bottom: 20px;
         }
@@ -598,10 +522,11 @@ export default function News() {
 
         .news-skeleton-card {
           padding: 18px;
+          background: #FFFFFF;
         }
 
         .skeleton-line {
-          background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+          background: linear-gradient(90deg, #F1F5F9 25%, #E2E8F0 50%, #F1F5F9 75%);
           background-size: 200% 100%;
           animation: skeleton-loading 1.5s infinite;
           border-radius: 4px;
@@ -613,12 +538,8 @@ export default function News() {
         }
 
         @media (max-width: 640px) {
-          .news-grid {
-            grid-template-columns: 1fr;
-          }
-          .news-header-top {
-            flex-direction: column;
-          }
+          .news-grid { grid-template-columns: 1fr; }
+          .news-header-top { flex-direction: column; }
         }
       `}</style>
     </div>
