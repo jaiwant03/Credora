@@ -17,6 +17,7 @@ const n8nService = require('./n8nService');
 const geminiService = require('./aiProviders/geminiService');
 const groqService = require('./aiProviders/groqService');
 const huggingfaceService = require('./aiProviders/huggingfaceService');
+const ollamaService = require('./aiProviders/ollamaService');
 const webSearchService = require('./webSearchService');
 const demoService = require('./demoService');
 const Verification = require('../models/Verification');
@@ -32,6 +33,15 @@ const CONFIDENCE_LEVELS = [
   { min: 0, max: 39, level: 'unable', label: 'Unable to Verify' },
 ];
 
+function hasConfiguredProviders() {
+  return (
+    geminiService.isAvailable() ||
+    groqService.isAvailable() ||
+    huggingfaceService.isAvailable() ||
+    ollamaService.isAvailable()
+  );
+}
+
 function getConfidenceLevel(score) {
   for (const level of CONFIDENCE_LEVELS) {
     if (score >= level.min && score <= level.max) return level;
@@ -42,8 +52,9 @@ function getConfidenceLevel(score) {
 async function verify(question) {
   const requestId = `verif-${uuidv4().slice(0, 8)}`;
   const settings = await getSettings();
-  const isDemoMode = (settings.demo_mode ?? 'true') === 'true';
-  const hasN8n = !!process.env.N8N_WEBHOOK_URL;
+  const isDemoMode = (settings.demo_mode ?? 'false') === 'true';
+  const n8nEnabled = (settings.n8n_enabled ?? 'false') === 'true' || process.env.N8N_ENABLED === 'true';
+  const hasN8n = !!process.env.N8N_WEBHOOK_URL && n8nEnabled;
 
   // Step 1: Real-time Grounding from Wikipedia & Google News
   let groundingData = { sources: [], sourceObjects: [], evidenceSnippets: [], hasGrounding: false };
@@ -59,12 +70,15 @@ async function verify(question) {
     try {
       result = await n8nService.triggerVerification(question, requestId);
     } catch (e) {
-      console.warn('[n8n] Webhook call failed, falling back:', e.message);
-      result = isDemoMode
-        ? await demoService.runDemoVerification(question, requestId, groundingData)
-        : await runDirectVerification(question, requestId, settings, groundingData);
+      console.warn('[n8n] Webhook call failed, falling back to direct multi-agent pipeline:', e.message);
+      result = hasConfiguredProviders()
+        ? await runDirectVerification(question, requestId, settings, groundingData)
+        : await demoService.runDemoVerification(question, requestId, groundingData);
     }
-  } else if (!isDemoMode && (geminiService.isAvailable() || groqService.isAvailable())) {
+  } else if (hasConfiguredProviders() && !isDemoMode) {
+    result = await runDirectVerification(question, requestId, settings, groundingData);
+  } else if (hasConfiguredProviders()) {
+    // If providers are available, prioritize real verification
     result = await runDirectVerification(question, requestId, settings, groundingData);
   } else {
     result = await demoService.runDemoVerification(question, requestId, groundingData);
@@ -161,7 +175,7 @@ async function runDirectVerification(question, requestId, settings, groundingDat
     ? `Question: "${question}"\n\nVerified Reference & News Context:\n${groundingData.combinedContext}\n\nProvide an accurate, concise, and verified response using the context above.`
     : question;
 
-  for (const provider of [geminiService, groqService]) {
+  for (const provider of [groqService, huggingfaceService, geminiService, ollamaService]) {
     try {
       const ans = await provider.generateAnswer(promptText);
       if (ans && ans.answer) {
@@ -232,6 +246,7 @@ async function runParallelVerification(question, answer, groundingData) {
     geminiService.verifyAnswer(question, verifyPrompt),
     groqService.verifyAnswer(question, verifyPrompt),
     huggingfaceService.verifyAnswer(question, verifyPrompt),
+    ollamaService.verifyAnswer(question, verifyPrompt),
   ];
   const settled = await Promise.allSettled(tasks);
   return settled

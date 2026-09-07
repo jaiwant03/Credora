@@ -40,7 +40,7 @@ async function generateAnswer(question) {
       {
         contents: [{ parts: [{ text: `Answer this question clearly, accurately, and factually: ${question}` }] }],
       },
-      { timeout: 20000 }
+      { timeout: 6000 }
     );
 
     const text = response.data?.candidates?.[0]?.content?.parts?.[0]?.text;
@@ -88,7 +88,7 @@ Respond in valid JSON only with this schema:
     const response = await axios.post(
       `${GEMINI_API_URL}?key=${process.env.GEMINI_API_KEY}`,
       { contents: [{ parts: [{ text: prompt }] }] },
-      { timeout: 20000 }
+      { timeout: 6000 }
     );
 
     const text = response.data?.candidates?.[0]?.content?.parts?.[0]?.text || '';

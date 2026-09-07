@@ -78,8 +78,9 @@ app.get('/api/health', (req, res) => {
       gemini: !!process.env.GEMINI_API_KEY ? 'configured' : 'not_configured',
       groq: !!process.env.GROQ_API_KEY ? 'configured' : 'not_configured',
       huggingface: !!process.env.HUGGINGFACE_API_KEY ? 'configured' : 'not_configured',
+      ollama: !!process.env.OLLAMA_URL ? 'configured' : 'not_configured',
       n8n: !!process.env.N8N_WEBHOOK_URL ? 'configured' : 'not_configured',
-      demoMode: !process.env.GEMINI_API_KEY && !process.env.GROQ_API_KEY,
+      demoMode: !process.env.GEMINI_API_KEY && !process.env.GROQ_API_KEY && !process.env.HUGGINGFACE_API_KEY && !process.env.OLLAMA_URL,
     },
   });
 });

@@ -69,4 +69,35 @@ async function toggleAgent(req, res, next) {
   }
 }
 
-module.exports = { getSettingsHandler, updateSettingsHandler, getAgents, toggleAgent };
+async function testProvider(req, res, next) {
+  try {
+    const { provider } = req.params;
+    let result = null;
+
+    if (provider === 'gemini') {
+      const geminiService = require('../services/aiProviders/geminiService');
+      result = await geminiService.checkStatus();
+    } else if (provider === 'groq') {
+      const groqService = require('../services/aiProviders/groqService');
+      result = await groqService.checkStatus();
+    } else if (provider === 'huggingface') {
+      const huggingfaceService = require('../services/aiProviders/huggingfaceService');
+      result = await huggingfaceService.checkStatus();
+    } else if (provider === 'ollama') {
+      const ollamaService = require('../services/aiProviders/ollamaService');
+      result = await ollamaService.checkStatus();
+    } else if (provider === 'n8n') {
+      const n8nService = require('../services/n8nService');
+      result = await n8nService.checkStatus();
+    } else {
+      return res.status(400).json({ error: true, message: `Unknown provider: ${provider}` });
+    }
+
+    res.json({ success: true, provider, result });
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { getSettingsHandler, updateSettingsHandler, getAgents, toggleAgent, testProvider };
+

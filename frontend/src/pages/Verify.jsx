@@ -314,6 +314,11 @@ export default function Verify() {
                 <span className="badge badge-gray" style={{ textTransform: 'capitalize' }}>
                   {result.classification || 'General Fact'}
                 </span>
+                {result.viaN8n && (
+                  <span className="badge" style={{ background: '#EA4B7120', color: '#EA4B71', border: '1px solid #EA4B7140', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                    🔄 n8n Orchestrated
+                  </span>
+                )}
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <button
@@ -511,20 +516,37 @@ export default function Verify() {
                   <div className="details-section" style={{ marginTop: 20 }}>
                     <div className="details-section-title">AI Verifier Agent Outputs</div>
                     <div className="details-agents-grid">
-                      {result.verifierDetails.map((v, i) => (
-                        <div key={i} className="details-agent-card">
-                          <div className="details-agent-header">
-                            <span className="details-agent-name">{v.provider}</span>
-                            <span className={`badge ${v.agreement ? 'badge-green' : 'badge-yellow'}`}>
-                              {v.agreement ? 'Agreed' : 'Disputed'}
-                            </span>
+                      {result.verifierDetails.map((v, i) => {
+                        const icon = v.provider?.toLowerCase().includes('hugging')
+                          ? '🤗'
+                          : v.provider?.toLowerCase().includes('ollama')
+                          ? '🦙'
+                          : v.provider?.toLowerCase().includes('groq')
+                          ? '⚡'
+                          : v.provider?.toLowerCase().includes('n8n')
+                          ? '🔄'
+                          : '✨';
+
+                        return (
+                          <div key={i} className="details-agent-card">
+                            <div className="details-agent-header">
+                              <span className="details-agent-name">
+                                <span style={{ marginRight: 6 }}>{icon}</span>
+                                {v.provider}
+                              </span>
+                              <span className={`badge ${v.agreement ? 'badge-green' : 'badge-yellow'}`}>
+                                {v.agreement ? 'Agreed' : 'Disputed'}
+                              </span>
+                            </div>
+                            <p className="details-agent-reason">{v.reason}</p>
+                            <div className="details-agent-meta">
+                              <span>Confidence: {Math.round((v.confidence || 0) * 100)}%</span>
+                              {v.role && <span style={{ marginLeft: 6, color: 'var(--text-muted)' }}>• {v.role}</span>}
+                              {v.model && <span style={{ marginLeft: 6, color: 'var(--brand-primary)', fontFamily: 'monospace', fontSize: '0.75rem' }}>[{v.model}]</span>}
+                            </div>
                           </div>
-                          <p className="details-agent-reason">{v.reason}</p>
-                          <div className="details-agent-meta">
-                            <span>Confidence: {Math.round((v.confidence || 0) * 100)}%</span>
-                          </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 )}

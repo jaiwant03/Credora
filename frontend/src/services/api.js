@@ -73,6 +73,9 @@ export const updateSettings = (payload) =>
 export const toggleAgent = (provider, enabled) =>
   api.put(`/settings/agents/${provider}`, { enabled });
 
+export const testProvider = (provider) =>
+  api.post(`/settings/test/${provider}`);
+
 // ── News & Wikipedia ────────────────────────────────────
 export const getLiveNews = (category = 'all', limit = 20) =>
   api.get('/news', { params: { category, limit } });

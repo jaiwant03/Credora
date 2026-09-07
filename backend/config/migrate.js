@@ -32,7 +32,8 @@ async function runMigration() {
       { _id: 'agent-gemini', name: 'Google Gemini', provider: 'gemini', enabled: true, status: 'unknown' },
       { _id: 'agent-groq', name: 'Groq', provider: 'groq', enabled: true, status: 'unknown' },
       { _id: 'agent-huggingface', name: 'Hugging Face', provider: 'huggingface', enabled: true, status: 'unknown' },
-      { _id: 'agent-ollama', name: 'Ollama', provider: 'ollama', enabled: false, status: 'unknown' },
+      { _id: 'agent-ollama', name: 'Ollama', provider: 'ollama', enabled: !!process.env.OLLAMA_URL, status: 'unknown' },
+      { _id: 'agent-n8n', name: 'n8n Workflow', provider: 'n8n', enabled: !!process.env.N8N_WEBHOOK_URL, status: 'unknown' },
     ];
 
     for (const agent of defaultAgents) {

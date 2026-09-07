@@ -249,7 +249,20 @@ ${sources || 'No external sources cited.'}
                     }} />
                     <div style={{ flex: 1 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                        <span style={{ fontWeight: 600, fontSize: '0.875rem' }}>{v.provider}</span>
+                        <span style={{ fontWeight: 600, fontSize: '0.875rem' }}>
+                          <span style={{ marginRight: 6 }}>
+                            {v.provider?.toLowerCase().includes('hugging')
+                              ? '🤗'
+                              : v.provider?.toLowerCase().includes('ollama')
+                              ? '🦙'
+                              : v.provider?.toLowerCase().includes('groq')
+                              ? '⚡'
+                              : v.provider?.toLowerCase().includes('n8n')
+                              ? '🔄'
+                              : '✨'}
+                          </span>
+                          {v.provider}
+                        </span>
                         <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>({v.role || 'Verifier'})</span>
                         {v.agreement
                           ? <span className="badge badge-green" style={{ fontSize: '0.6875rem' }}>Agrees</span>

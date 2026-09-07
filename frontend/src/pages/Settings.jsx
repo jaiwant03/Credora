@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import {
   Cpu, Shield, Sliders, CheckCircle, XCircle,
-  Save, RefreshCw, Eye, EyeOff, Sun, Moon,
+  Save, RefreshCw, Eye, EyeOff, Sun, Moon, Activity, Terminal, Workflow, Zap, Sparkles,
 } from 'lucide-react';
-import { getSettings, updateSettings, toggleAgent } from '../services/api';
+import { getSettings, updateSettings, toggleAgent, testProvider } from '../services/api';
 import { SkeletonCard } from '../components/ui/Skeleton';
 import ErrorState from '../components/ui/ErrorState';
 
@@ -175,8 +175,15 @@ export default function Settings() {
               <ToggleField
                 label="Demo Mode"
                 hint="Use simulated responses when API keys are not configured"
-                value={verForm.demoMode ?? true}
+                value={verForm.demoMode ?? false}
                 onChange={(v) => setVerForm(f => ({ ...f, demoMode: v }))}
+              />
+
+              <ToggleField
+                label="n8n Workflow Automation"
+                hint="Dispatch claims through n8n webhook orchestration before local fallback"
+                value={verForm.n8nEnabled ?? false}
+                onChange={(v) => setVerForm(f => ({ ...f, n8nEnabled: v }))}
               />
             </div>
           </div>
@@ -338,27 +345,85 @@ export default function Settings() {
 
 function ProviderRow({ provider, providerKey, onToggle, isLast }) {
   const [showKey, setShowKey] = useState(false);
+  const [testing, setTesting] = useState(false);
+  const [testResult, setTestResult] = useState(null);
 
   const isConfigured = provider.configured;
   const StatusIcon = isConfigured ? CheckCircle : XCircle;
   const statusColor = isConfigured ? '#16A34A' : '#9CA3AF';
 
+  async function handleTest() {
+    setTesting(true);
+    setTestResult(null);
+    try {
+      const res = await testProvider(providerKey);
+      setTestResult(res?.result || { status: 'unknown' });
+    } catch (e) {
+      setTestResult({ status: 'error', error: e.message });
+    } finally {
+      setTesting(false);
+    }
+  }
+
+  const providerIcons = {
+    gemini: <Sparkles size={16} color="#6366F1" />,
+    groq: <Zap size={16} color="#F59E0B" />,
+    huggingface: <span style={{ fontSize: '1rem' }}>🤗</span>,
+    ollama: <span style={{ fontSize: '1rem' }}>🦙</span>,
+    n8n: <Workflow size={16} color="#EA4B71" />,
+  };
+
   return (
     <div style={{
-      display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px',
+      display: 'flex', alignItems: 'center', gap: 14, padding: '16px 18px',
       borderBottom: isLast ? 'none' : '1px solid var(--border-light)',
+      background: 'var(--bg-card)',
     }}>
-      <div style={{ flex: 1 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontWeight: 500, fontSize: '0.875rem' }}>{provider.name}</span>
+      {/* Icon */}
+      <div style={{
+        width: 36, height: 36, borderRadius: 10,
+        background: 'var(--bg-card-secondary, rgba(0,0,0,0.03))',
+        border: '1px solid var(--border-light)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        flexShrink: 0,
+      }}>
+        {providerIcons[providerKey] || <Cpu size={16} color="var(--brand-primary)" />}
+      </div>
+
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <span style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)' }}>{provider.name}</span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
             <StatusIcon size={13} color={statusColor} />
-            <span style={{ fontSize: '0.75rem', color: statusColor }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 500, color: statusColor }}>
               {isConfigured ? 'Connected' : 'Not Connected'}
             </span>
           </div>
+          {testResult && (
+            <span style={{
+              fontSize: '0.7rem',
+              fontWeight: 600,
+              padding: '2px 8px',
+              borderRadius: 6,
+              background: testResult.available || testResult.status === 'connected' ? 'rgba(22, 163, 74, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+              color: testResult.available || testResult.status === 'connected' ? '#16A34A' : '#EF4444',
+            }}>
+              {testResult.available || testResult.status === 'connected'
+                ? `✓ Ping OK ${testResult.activeModel ? `(${testResult.activeModel})` : (testResult.model ? `(${testResult.model.split('/').pop()})` : '')}`
+                : `⚠️ ${testResult.error || testResult.status || 'Failed'}`}
+            </span>
+          )}
         </div>
-        {provider.keyMasked && (
+
+        {/* Credentials / URL Display */}
+        {provider.url ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>URL:</span>
+            <span style={{ fontFamily: 'monospace', fontSize: '0.8125rem', color: 'var(--brand-primary)', background: 'var(--brand-light)', padding: '2px 6px', borderRadius: 4 }}>
+              {provider.url}
+            </span>
+          </div>
+        ) : provider.keyMasked ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
             <span style={{ fontFamily: 'monospace', fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
               {showKey ? provider.keyMasked : '••••••••••••••••'}
@@ -366,21 +431,41 @@ function ProviderRow({ provider, providerKey, onToggle, isLast }) {
             <button
               type="button"
               onClick={() => setShowKey(!showKey)}
-              style={{ background: 'none', border: 'none', color: 'var(--text-muted)', padding: 2 }}
+              style={{ background: 'none', border: 'none', color: 'var(--text-muted)', padding: 2, cursor: 'pointer' }}
+              title={showKey ? 'Hide key' : 'Show key'}
             >
               {showKey ? <EyeOff size={12} /> : <Eye size={12} />}
             </button>
           </div>
-        )}
-        {!provider.keyMasked && (
+        ) : (
           <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 0, marginTop: 2 }}>
-            Set {providerKey.toUpperCase()}_API_KEY in .env to connect
+            {providerKey === 'ollama'
+              ? 'Set OLLAMA_URL in backend/.env (e.g. http://localhost:11434)'
+              : providerKey === 'n8n'
+              ? 'Set N8N_WEBHOOK_URL in backend/.env (e.g. http://localhost:5678/webhook/VerifyAI)'
+              : `Set ${providerKey.toUpperCase()}_API_KEY in backend/.env to connect`}
           </p>
         )}
       </div>
 
+      {/* Test Connection Button */}
+      {isConfigured && (
+        <button
+          type="button"
+          onClick={handleTest}
+          disabled={testing}
+          className="btn btn-secondary"
+          style={{ padding: '5px 10px', fontSize: '0.75rem', height: 30 }}
+          title="Test real-time connection"
+        >
+          {testing ? <RefreshCw size={12} className="animate-spin" /> : <Activity size={12} />}
+          <span>{testing ? 'Testing...' : 'Test'}</span>
+        </button>
+      )}
+
+      {/* Enable Toggle */}
       {provider.enabled !== undefined && (
-        <label className="toggle">
+        <label className="toggle" style={{ flexShrink: 0 }}>
           <input
             type="checkbox"
             checked={Boolean(provider.enabled)}

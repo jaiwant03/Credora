@@ -41,18 +41,27 @@ async function getFormattedSettings() {
       },
       ollama: {
         name: 'Ollama (Local)',
-        configured: false,
+        configured: !!process.env.OLLAMA_URL,
+        url: process.env.OLLAMA_URL || 'http://localhost:11434',
         keyMasked: null,
-        enabled: agentMap.ollama ? agentMap.ollama.enabled : false,
+        enabled: agentMap.ollama ? agentMap.ollama.enabled : true,
+      },
+      n8n: {
+        name: 'n8n Workflow Automation',
+        configured: !!process.env.N8N_WEBHOOK_URL,
+        url: process.env.N8N_WEBHOOK_URL,
+        keyMasked: null,
+        enabled: agentMap.n8n ? agentMap.n8n.enabled : ((settingsMap.n8n_enabled ?? 'false') === 'true' || process.env.N8N_ENABLED === 'true'),
       },
     };
 
     const verification = {
       minConfidenceThreshold: parseInt(settingsMap.min_confidence_threshold || 60),
-      numVerificationAgents: parseInt(settingsMap.num_verification_agents || 3),
+      numVerificationAgents: parseInt(settingsMap.num_verification_agents || 4),
       additionalVerificationOnConflict: (settingsMap.additional_verification_on_conflict ?? 'true') === 'true',
       sourceVerificationEnabled: (settingsMap.source_verification_enabled ?? 'true') === 'true',
-      demoMode: (settingsMap.demo_mode ?? 'true') === 'true',
+      demoMode: (settingsMap.demo_mode ?? 'false') === 'true',
+      n8nEnabled: (settingsMap.n8n_enabled ?? 'false') === 'true' || process.env.N8N_ENABLED === 'true',
     };
 
     const scoring = {
@@ -139,6 +148,9 @@ async function updateStructuredSettings(payload) {
     }
     if (verification.demoMode !== undefined) {
       updates.push(updateSetting('demo_mode', verification.demoMode));
+    }
+    if (verification.n8nEnabled !== undefined) {
+      updates.push(updateSetting('n8n_enabled', verification.n8nEnabled));
     }
   }
 
